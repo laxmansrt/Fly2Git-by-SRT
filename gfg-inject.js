@@ -12,6 +12,10 @@
 (function () {
   "use strict";
 
+  if (!window.location.hostname.endsWith("geeksforgeeks.org")) return;
+  if (window.__FLY2GIT_GFG_INJECT_INITIALIZED__) return;
+  window.__FLY2GIT_GFG_INJECT_INITIALIZED__ = true;
+
   console.log("[Fly2Git] v1.1.6 GFG page-context adapter loaded");
 
   // ---------------------------------------------------------------

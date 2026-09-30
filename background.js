@@ -10,24 +10,36 @@ importScripts("entitlements.js");
 const LANG_EXT = {
   python: "py",
   python3: "py",
+  py: "py",
+  pypy: "py",
+  pypy3: "py",
   java: "java",
   c: "c",
   cpp: "cpp",
   "c++": "cpp",
+  c_cpp: "cpp",
   csharp: "cs",
+  "c#": "cs",
+  cs: "cs",
   javascript: "js",
+  js: "js",
+  nodejs: "js",
   typescript: "ts",
+  ts: "ts",
   php: "php",
   swift: "swift",
   kotlin: "kt",
   dart: "dart",
   golang: "go",
+  go: "go",
   ruby: "rb",
   scala: "scala",
   rust: "rs",
   racket: "rkt",
   erlang: "erl",
   elixir: "ex",
+  perl: "pl",
+  r: "r",
   mysql: "sql",
   mssql: "sql",
   oraclesql: "sql",
@@ -350,7 +362,7 @@ async function commitSolutionAndReadme({
         body: JSON.stringify({
           message: `Initialize repository with README via ${FLY2GIT_CONFIG.BRAND_NAME}`,
           content: b64EncodeUnicode(
-            `# LeetCode Solutions\n\nAutomated LeetCode sync powered by [${FLY2GIT_CONFIG.BRAND_NAME}](https://github.com/apps/${FLY2GIT_CONFIG.GITHUB_APP_SLUG}).\n`
+            `# Coding Solutions\n\nAutomated solution sync powered by [${FLY2GIT_CONFIG.BRAND_NAME}](https://github.com/apps/${FLY2GIT_CONFIG.GITHUB_APP_SLUG}).\n`
           ),
           branch,
         }),
@@ -406,7 +418,7 @@ async function commitSolutionAndReadme({
   await ghFetchRaw(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
     method: "PATCH",
     headers: authHeaders(token),
-    body: JSON.stringify({ sha: newCommit.sha }),
+    body: JSON.stringify({ sha: newCommit.sha, force: false }),
   });
 
   return { commitSha: newCommit.sha, branch };
@@ -509,7 +521,16 @@ async function handleAcceptedSubmissionInternal(rawPayload) {
     throw error;
   }
 
-  const ext = LANG_EXT[lang.toLowerCase()] || "txt";
+  const ext = LANG_EXT[lang.toLowerCase()];
+  if (!ext) {
+    const error = new GitHubError(
+      `Unsupported or unknown language: ${lang}`,
+      { code: "VALIDATION" }
+    );
+    setStatus(false, error.message);
+    await logSync({ title, difficulty, platform, lang, status: "failed", reason: error.message, code: error.code });
+    throw error;
+  }
   const folder = Fly2GitPlatforms.buildCanonicalFolderPath(platform, difficulty, slug);
   const solutionPath = `${folder}/solution.${ext}`;
   const readmePath = `${folder}/README.md`;
@@ -977,7 +998,33 @@ function setStatus(ok, text) {
 
 // status: "added" | "updated" | "skipped" | "failed" | "retrying"
 async function logSync(entry) {
-  const { syncLog = [] } = await chrome.storage.local.get("syncLog");
-  const updated = [{ ...entry, time: Date.now() }, ...syncLog].slice(0, 20);
+  if (!entry || typeof entry !== "object") return;
+  // Sanitize to guarantee metadata only — never persist source code, tokens, or raw payloads
+  const cleanEntry = {
+    title: typeof entry.title === "string" ? entry.title.slice(0, 300) : "Untitled",
+    difficulty: typeof entry.difficulty === "string" ? entry.difficulty.slice(0, 50) : "Unknown",
+    platform: typeof entry.platform === "string" ? entry.platform.slice(0, 50) : "Unknown",
+    lang: typeof entry.lang === "string" ? entry.lang.slice(0, 50) : "unknown",
+    status: typeof entry.status === "string" ? entry.status : "unknown",
+    time: typeof entry.time === "number" ? entry.time : Date.now(),
+  };
+  if (entry.githubUrl && typeof entry.githubUrl === "string") {
+    cleanEntry.githubUrl = entry.githubUrl.slice(0, 500);
+  }
+  if (entry.code && typeof entry.code === "string") {
+    cleanEntry.code = entry.code.slice(0, 50);
+  }
+  if (entry.reason && typeof entry.reason === "string") {
+    cleanEntry.reason = entry.reason.slice(0, 300);
+  }
+
+  let currentLog = [];
+  try {
+    const data = await chrome.storage.local.get("syncLog");
+    if (Array.isArray(data.syncLog)) currentLog = data.syncLog;
+  } catch (_) {
+    currentLog = [];
+  }
+  const updated = [cleanEntry, ...currentLog].slice(0, 20);
   await chrome.storage.local.set({ syncLog: updated });
 }

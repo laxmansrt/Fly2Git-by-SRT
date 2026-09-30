@@ -17,6 +17,10 @@
 (function () {
   "use strict";
 
+  if (!window.location.hostname.endsWith("geeksforgeeks.org")) return;
+  if (window.__FLY2GIT_GFG_CONTENT_INITIALIZED__) return;
+  window.__FLY2GIT_GFG_CONTENT_INITIALIZED__ = true;
+
   console.log("[Fly2Git] v1.1.6 GFG content bridge loaded");
 
   var MAX_CODE_LENGTH = 200000;
@@ -119,11 +123,14 @@
       return "Code could not be extracted from editor";
     }
     if (p.code.length > MAX_CODE_LENGTH) return "Code exceeds maximum length";
-    if (!p.slug || typeof p.slug !== "string") return "Could not extract slug";
+    if (!p.slug || typeof p.slug !== "string" || p.slug.length > 200) return "Invalid or missing slug";
+    if (p.title && (typeof p.title !== "string" || p.title.length > 300)) return "Invalid title";
+    if (p.difficulty && (typeof p.difficulty !== "string" || p.difficulty.length > 50)) return "Invalid difficulty";
     // language must be a non-null string (normalizeGfgLanguage returns null for unknowns)
-    if (!p.language || typeof p.language !== "string") {
+    if (!p.language || typeof p.language !== "string" || p.language.length > 50 || p.language.toLowerCase() === "unknown") {
       return "Could not normalize language (raw: " + JSON.stringify(p.language) + ")";
     }
+    if (p.submissionId && (typeof p.submissionId !== "string" || p.submissionId.length > 100)) return "Invalid submissionId";
     return null; // valid
   }
 

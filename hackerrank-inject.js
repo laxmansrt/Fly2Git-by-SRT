@@ -16,6 +16,10 @@
 (function () {
   "use strict";
 
+  if (!window.location.hostname.endsWith("hackerrank.com")) return;
+  if (window.__FLY2GIT_HACKERRANK_INJECT_INITIALIZED__) return;
+  window.__FLY2GIT_HACKERRANK_INJECT_INITIALIZED__ = true;
+
   console.log("[Fly2Git][HackerRank] Adapter loaded");
 
   var DEBUG = true;
@@ -334,7 +338,7 @@
           type: "ACCEPTED",
           payload: normalizedPayload,
         },
-        "*"
+        window.location.origin
       );
     } catch (_) {}
   }

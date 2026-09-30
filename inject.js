@@ -11,6 +11,11 @@
 // No GitHub credentials are handled here.
 (function () {
   "use strict";
+
+  if (!window.location.hostname.endsWith("leetcode.com")) return;
+  if (window.__FLY2GIT_LEETCODE_INJECT_INITIALIZED__) return;
+  window.__FLY2GIT_LEETCODE_INJECT_INITIALIZED__ = true;
+
   const nativeFetch = window.fetch.bind(window);
 
   console.log("[Fly2Git] v1.1.6 LeetCode detector loaded", window.location.href);
@@ -248,7 +253,7 @@
 
       window.postMessage(
         {
-          source: "fly2git",
+          source: "fly2git-leetcode",
           type: "ACCEPTED",
           payload: {
             lang: lang,

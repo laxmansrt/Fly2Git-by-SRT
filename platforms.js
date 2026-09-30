@@ -206,8 +206,8 @@
       return { ok: false, error: "Submission status is not Accepted" };
     }
 
-    if (!norm.submission.language || norm.submission.language.length > 50) {
-      return { ok: false, error: "Invalid language identifier" };
+    if (!norm.submission.language || norm.submission.language.length > 50 || norm.submission.language.toLowerCase() === "unknown") {
+      return { ok: false, error: "Invalid or unknown language identifier" };
     }
 
     if (!norm.submission.code || typeof norm.submission.code !== "string") {

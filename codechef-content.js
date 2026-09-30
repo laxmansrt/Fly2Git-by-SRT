@@ -20,6 +20,10 @@
 (function () {
   "use strict";
 
+  if (!window.location.hostname.endsWith("codechef.com")) return;
+  if (window.__FLY2GIT_CODECHEF_CONTENT_INITIALIZED__) return;
+  window.__FLY2GIT_CODECHEF_CONTENT_INITIALIZED__ = true;
+
   console.log("[Fly2Git] CodeChef content bridge loaded");
 
   var MAX_CODE_LENGTH = 200000;
@@ -76,7 +80,7 @@
     if (p.submission.status !== "Accepted") {
       return "Submission status is not Accepted: " + p.submission.status;
     }
-    if (!p.submission.language || typeof p.submission.language !== "string" || p.submission.language.length > 50) {
+    if (!p.submission.language || typeof p.submission.language !== "string" || p.submission.language.length > 50 || p.submission.language.toLowerCase() === "unknown") {
       return "Invalid language identifier";
     }
     if (!p.submission.code || typeof p.submission.code !== "string" || p.submission.code.trim().length === 0) {
@@ -168,7 +172,7 @@
   });
 
   window.addEventListener("message", function (event) {
-    if (event.source !== window) return;
+    if (event.source !== window || event.origin !== "https://www.codechef.com") return;
     var data = event.data;
     if (data && data.source === "fly2git-codechef" && data.type === "ACCEPTED") {
       processAcceptedPayload(data.payload);

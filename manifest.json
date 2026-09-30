@@ -3,7 +3,7 @@
   "name": "Fly2Git by SRT",
   "short_name": "Fly2Git",
   "version": "1.1.6",
-  "description": "Automatically sync your accepted LeetCode and GeeksforGeeks solutions to GitHub — with repository-level permissions, not account-wide access.",
+  "description": "Automatically sync your accepted LeetCode, GeeksforGeeks, HackerRank, and CodeChef solutions to GitHub — with repository-level permissions, not account-wide access.",
   "permissions": [
     "storage",
     "alarms"
