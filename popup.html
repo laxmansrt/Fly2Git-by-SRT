@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="Fly2Git" />
+    <div>
+      <h1>Fly2Git <span class="by-srt">by SRT</span></h1>
+      <p class="tagline">Solve it. Ship it.</p>
+    </div>
+  </header>
+
+  <!-- State 1: not connected -->
+  <section id="connectView">
+    <p class="lead">
+      Connect GitHub and choose exactly which repository Fly2Git can access —
+      not your whole account.
+    </p>
+    <button id="connectBtn">Connect GitHub</button>
+  </section>
+
+  <!-- State 2: device flow in progress -->
+  <section id="deviceFlowView" class="hidden">
+    <p class="lead">Enter this code on GitHub to connect:</p>
+    <div id="userCode" class="user-code">— — — —</div>
+    <button id="openGithubBtn">Open GitHub</button>
+    <p class="hint" id="deviceFlowStatus">Waiting for authorization…</p>
+  </section>
+
+  <!-- State 3: connected, no repo selected yet -->
+  <section id="repoPickerView" class="hidden">
+    <p class="lead">Select the repository Fly2Git should sync to:</p>
+    <select id="repoSelect"></select>
+    <button id="saveRepoBtn">Use this repository</button>
+    <p class="hint">
+      Don't see your repo?
+      <a id="installMoreLink" href="#" target="_blank">Grant Fly2Git access to more repos</a>
+    </p>
+  </section>
+
+  <!-- State 4: fully configured -->
+  <section id="activeView" class="hidden">
+    <div class="active-repo">
+      <span class="dot"></span>
+      <div>
+        <strong id="activeRepoName"></strong>
+        <div class="hint">Syncing accepted solutions here</div>
+      </div>
+    </div>
+    <button id="changeRepoBtn" class="secondary">Change repository</button>
+
+    <!-- State 4a: Last sync status banner -->
+    <div id="lastSyncBanner" class="last-sync-banner hidden">
+      <span id="lastSyncIcon" class="last-sync-icon"></span>
+      <div class="last-sync-details">
+        <span id="lastSyncText" class="last-sync-text"></span>
+        <span id="lastSyncTime" class="last-sync-time"></span>
+      </div>
+    </div>
+
+    <!-- State 4b: Platform selection & plan -->
+    <div class="plan-card">
+      <div class="plan-header">
+        <span class="plan-title">Plan</span>
+        <span id="planBadge" class="plan-badge">Basic — Free</span>
+      </div>
+
+      <div class="platforms-subheading">
+        <span class="subheading-title">Platforms</span>
+        <span id="platformsLimitHint" class="platforms-limit-hint">(Choose any 2)</span>
+      </div>
+
+      <div id="platformsList" class="platforms-list"></div>
+      <div id="platformMessage" class="platform-message hidden"></div>
+    </div>
+
+    <div class="sync-log-header">
+      <h2>Recent syncs</h2>
+      <button id="clearSyncLogBtn" class="clear-btn hidden" title="Clear sync history">Clear</button>
+    </div>
+    <ul id="syncLogList" class="sync-log"></ul>
+
+    <button id="disconnectBtn" class="secondary danger">Disconnect GitHub</button>
+  </section>
+
+  <footer>
+    <a href="#" id="copyDiagnosticsLink">Copy Diagnostics</a>
+    <span class="footer-sep">·</span>
+    <a href="#" id="reportLink">Report an issue</a>
+  </footer>
+
+  <script src="platforms.js"></script>
+  <script src="entitlements.js"></script>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
