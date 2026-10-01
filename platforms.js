@@ -42,7 +42,7 @@
       id: "codeforces",
       name: "Codeforces",
       origin: "https://codeforces.com",
-      active: false,
+      active: true,
       allowedDifficulties: Object.freeze(["Unknown"]),
     }),
     atcoder: Object.freeze({
@@ -102,7 +102,9 @@
    * <Platform>/<Difficulty>/<Problem>/
    */
   function buildCanonicalFolderPath(platformName, difficulty, problemIdentifier) {
-    var safePlatform = sanitizePathSegment(platformName, "LeetCode", 50);
+    var regKey = (platformName || "").toString().toLowerCase();
+    var canonicalName = (PLATFORM_REGISTRY[regKey] && PLATFORM_REGISTRY[regKey].name) || platformName;
+    var safePlatform = sanitizePathSegment(canonicalName, "LeetCode", 50);
     var safeDifficulty = sanitizePathSegment(difficulty, "Unknown", 50);
     var safeProblem = sanitizePathSegment(problemIdentifier, "problem", 120);
 

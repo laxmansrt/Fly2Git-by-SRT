@@ -7,6 +7,120 @@ importScripts("config.js");
 importScripts("platforms.js");
 importScripts("entitlements.js");
 
+
+const CODEFORCES_STAGING_KEY = "fly2git_codeforces_staging";
+const CODEFORCES_STAGING_TTL_MS = 30000;
+
+async function stageCodeforcesSubmission(payload) {
+  if (!payload || typeof payload !== "object") return;
+  // Transient staging in extension session storage only. Never put into logs, history, or diagnostics.
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.session) {
+    await chrome.storage.session.set({ [CODEFORCES_STAGING_KEY]: payload });
+  }
+}
+
+async function getCodeforcesStaging() {
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.session) {
+    const res = await chrome.storage.session.get(CODEFORCES_STAGING_KEY);
+    const data = res ? res[CODEFORCES_STAGING_KEY] : null;
+    if (!data) return null;
+    if (Date.now() - (data.timestamp || 0) > CODEFORCES_STAGING_TTL_MS) {
+      await chrome.storage.session.remove(CODEFORCES_STAGING_KEY);
+      return null;
+    }
+    return data;
+  }
+  return null;
+}
+
+async function clearCodeforcesStaging() {
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.session) {
+    await chrome.storage.session.remove(CODEFORCES_STAGING_KEY);
+  }
+}
+
+
+// ---------------------------------------------------------------
+// Codeforces API boundary: all user.status polling runs HERE in
+// the trusted background context, never in a content script.
+// ---------------------------------------------------------------
+const CF_API_HANDLE_RE = /^[A-Za-z0-9._-]{1,24}$/;
+
+/**
+ * Validates a Codeforces handle for safe inclusion in API URLs.
+ * Handles may contain letters, digits, dots, underscores, and hyphens (max 24 chars).
+ */
+function isValidCodeforcesHandle(handle) {
+  return typeof handle === "string" && CF_API_HANDLE_RE.test(handle);
+}
+
+/**
+ * Fetches the 5 most recent submissions for a Codeforces handle via the
+ * official user.status API. Returns a sanitized array of submission objects
+ * containing only the fields the content script needs for correlation.
+ *
+ * SECURITY:
+ * - Only calls https://codeforces.com/api/user.status (hardcoded).
+ * - Validates handle against strict alphanumeric pattern.
+ * - credentials: "omit" — never sends cookies or auth headers.
+ * - Strips all fields except the safe correlation subset.
+ * - Never logs source code.
+ */
+async function pollCodeforcesStatus(handle) {
+  if (!isValidCodeforcesHandle(handle)) {
+    return { ok: false, error: "Invalid handle" };
+  }
+
+  const apiUrl =
+    "https://codeforces.com/api/user.status?handle=" +
+    encodeURIComponent(handle) +
+    "&from=1&count=5";
+
+  try {
+    const resp = await fetch(apiUrl, { credentials: "omit" });
+    if (!resp.ok) {
+      return { ok: false, error: "HTTP " + resp.status };
+    }
+    const data = await resp.json();
+    if (!data || data.status !== "OK" || !Array.isArray(data.result)) {
+      return { ok: false, error: data && data.comment ? data.comment : "Non-OK response" };
+    }
+
+    // Sanitize: return only the fields needed for correlation/verdict
+    const sanitized = data.result.map(function (sub) {
+      return {
+        id: sub.id,
+        contestId: sub.contestId,
+        creationTimeSeconds: sub.creationTimeSeconds,
+        verdict: sub.verdict || null,
+        programmingLanguage: sub.programmingLanguage || null,
+        problem: sub.problem
+          ? {
+              contestId: sub.problem.contestId,
+              index: sub.problem.index,
+              name: sub.problem.name,
+              rating: sub.problem.rating != null ? sub.problem.rating : null,
+            }
+          : null,
+        author: sub.author
+          ? {
+              participantType: sub.author.participantType || null,
+              members: Array.isArray(sub.author.members)
+                ? sub.author.members.map(function (m) {
+                    return { handle: m.handle || null };
+                  })
+                : [],
+            }
+          : null,
+      };
+    });
+
+    return { ok: true, submissions: sanitized };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : "Fetch error" };
+  }
+}
+
 const LANG_EXT = {
   python: "py",
   python3: "py",
@@ -152,6 +266,11 @@ async function ghFetchRaw(url, options = {}, { treat404AsNull = false } = {}) {
           : "GitHub rejected the request (validation error).",
         { status: 422, code: "VALIDATION" }
       );
+    case 429:
+      throw new GitHubError("GitHub rate limit reached. Try again later.", {
+        status: 429,
+        code: "RATE_LIMIT",
+      });
     default:
       if (res.status >= 500) {
         throw new GitHubError(
@@ -927,6 +1046,30 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         .catch((err) => sendResponse({ ok: false, error: err.message }));
       return true;
 
+    case "STAGE_CODEFORCES_SUBMISSION":
+      stageCodeforcesSubmission(message.payload)
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+
+    case "GET_CODEFORCES_STAGING":
+      getCodeforcesStaging()
+        .then((staging) => sendResponse({ ok: true, staging }))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+
+    case "CLEAR_CODEFORCES_STAGING":
+      clearCodeforcesStaging()
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+
+    case "POLL_CODEFORCES_STATUS":
+      pollCodeforcesStatus(message.handle)
+        .then((result) => sendResponse(result))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
+
     default:
       return false;
   }
@@ -1027,4 +1170,25 @@ async function logSync(entry) {
   }
   const updated = [cleanEntry, ...currentLog].slice(0, 20);
   await chrome.storage.local.set({ syncLog: updated });
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    stageCodeforcesSubmission,
+    getCodeforcesStaging,
+    clearCodeforcesStaging,
+    CODEFORCES_STAGING_KEY,
+    CODEFORCES_STAGING_TTL_MS,
+    pollCodeforcesStatus,
+    isValidCodeforcesHandle,
+    CF_API_HANDLE_RE,
+    LANG_EXT,
+    listInstalledRepos,
+    paginateItems,
+    parseNextLink,
+    ghFetchRaw,
+    GitHubError,
+    getValidAccessToken,
+    withRetry,
+  };
 }

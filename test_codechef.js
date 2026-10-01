@@ -499,7 +499,7 @@ async function runCodeChefTests() {
     assert.strictEqual(await entitlements.isPlatformAllowed("geeksforgeeks"), true);
     assert.strictEqual(await entitlements.isPlatformAllowed("hackerrank"), true);
     assert.strictEqual(await entitlements.isPlatformAllowed("codechef"), true);
-    assert.strictEqual(await entitlements.isPlatformAllowed("codeforces"), false); // still inactive!
+    assert.strictEqual(await entitlements.isPlatformAllowed("codeforces"), true); // active in Phase 9B!
 
     // Reset back to basic default
     await entitlements.setTestPlan("basic");

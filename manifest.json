@@ -13,6 +13,7 @@
     "https://www.geeksforgeeks.org/*",
     "https://www.hackerrank.com/*",
     "https://www.codechef.com/*",
+    "https://codeforces.com/*",
     "https://api.github.com/*",
     "https://github.com/*"
   ],
@@ -95,6 +96,25 @@
       ],
       "js": [
         "codechef-content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://codeforces.com/*"
+      ],
+      "js": [
+        "codeforces-inject.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://codeforces.com/*"
+      ],
+      "js": [
+        "codeforces-content.js"
       ],
       "run_at": "document_start"
     }

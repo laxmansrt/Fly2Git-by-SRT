@@ -40,7 +40,7 @@
       geeksforgeeks: Object.freeze({ id: "geeksforgeeks", name: "GeeksforGeeks", active: true }),
       hackerrank: Object.freeze({ id: "hackerrank", name: "HackerRank", active: true }),
       codechef: Object.freeze({ id: "codechef", name: "CodeChef", active: true }),
-      codeforces: Object.freeze({ id: "codeforces", name: "Codeforces", active: false }),
+      codeforces: Object.freeze({ id: "codeforces", name: "Codeforces", active: true }),
       atcoder: Object.freeze({ id: "atcoder", name: "AtCoder", active: false }),
     });
   }
