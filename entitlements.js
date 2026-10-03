@@ -400,11 +400,22 @@
    * If backend is unreachable, falls back gracefully to cached entitlement / Basic without throwing.
    */
   async function syncBackendEntitlement(authToken, backendBaseUrl) {
-    const defaultUrl =
-      typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG && FLY2GIT_CONFIG.BACKEND_API_URL
-        ? FLY2GIT_CONFIG.BACKEND_API_URL
-        : "https://api.fly2git.com";
-    const baseUrl = backendBaseUrl || defaultUrl;
+    let baseUrl = backendBaseUrl;
+    if (!baseUrl && typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      try {
+        const stored = await chrome.storage.local.get(["backendUrl", "backendApiUrl"]);
+        if (stored && (stored.backendUrl || stored.backendApiUrl)) {
+          baseUrl = stored.backendUrl || stored.backendApiUrl;
+        }
+      } catch (_) {}
+    }
+    if (!baseUrl) {
+      baseUrl =
+        typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG && FLY2GIT_CONFIG.BACKEND_API_URL
+          ? FLY2GIT_CONFIG.BACKEND_API_URL
+          : "https://api.fly2git.com";
+    }
+    baseUrl = baseUrl.replace(/\/+$/, "");
     const endpoint = `${baseUrl}/api/entitlement`;
 
     try {
@@ -648,11 +659,22 @@
    * When offline: disables switching cleanly without creating or resetting local cooldowns.
    */
   async function changePlatformSlot(slot, platform, authToken, backendBaseUrl) {
-    const defaultUrl =
-      typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG && FLY2GIT_CONFIG.BACKEND_API_URL
-        ? FLY2GIT_CONFIG.BACKEND_API_URL
-        : "https://api.fly2git.com";
-    const baseUrl = backendBaseUrl || defaultUrl;
+    let baseUrl = backendBaseUrl;
+    if (!baseUrl && typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      try {
+        const stored = await chrome.storage.local.get(["backendUrl", "backendApiUrl"]);
+        if (stored && (stored.backendUrl || stored.backendApiUrl)) {
+          baseUrl = stored.backendUrl || stored.backendApiUrl;
+        }
+      } catch (_) {}
+    }
+    if (!baseUrl) {
+      baseUrl =
+        typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG && FLY2GIT_CONFIG.BACKEND_API_URL
+          ? FLY2GIT_CONFIG.BACKEND_API_URL
+          : "https://api.fly2git.com";
+    }
+    baseUrl = baseUrl.replace(/\/+$/, "");
     const endpoint = `${baseUrl}/api/platform-slots/change`;
 
     try {

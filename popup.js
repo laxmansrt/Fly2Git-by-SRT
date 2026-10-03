@@ -128,15 +128,46 @@ function isTokenValidAndUnexpired(token) {
   }
 }
 
+let activeBackendUrl =
+  (typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG.BACKEND_API_URL) || "https://api.fly2git.com";
+
+if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+  try {
+    const p = chrome.storage.local.get(["backendUrl", "backendApiUrl"], (res) => {
+      if (res && (res.backendUrl || res.backendApiUrl)) {
+        activeBackendUrl = res.backendUrl || res.backendApiUrl;
+      }
+    });
+    if (p && typeof p.catch === "function") {
+      p.then((res) => {
+        if (res && (res.backendUrl || res.backendApiUrl)) {
+          activeBackendUrl = res.backendUrl || res.backendApiUrl;
+        }
+      }).catch(() => {});
+    }
+    if (chrome.storage.onChanged && typeof chrome.storage.onChanged.addListener === "function") {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && (changes.backendUrl || changes.backendApiUrl)) {
+          const newVal = (changes.backendUrl || changes.backendApiUrl).newValue;
+          if (newVal) activeBackendUrl = newVal;
+        }
+      });
+    }
+  } catch (_) {}
+}
+
 /**
- * Resolves the backend API URL. Prioritizes runtime config, then manifest/global config,
- * then canonical production URL https://api.fly2git.com. Never silently defaults to localhost.
+ * Resolves the backend API URL. Prioritizes runtime config, storage override, then manifest/global config,
+ * then canonical production URL https://api.fly2git.com.
  *
  * @returns {string}
  */
 function getBackendUrl() {
   if (typeof Fly2GitConfig !== "undefined" && Fly2GitConfig.backendUrl) {
     return Fly2GitConfig.backendUrl.replace(/\/+$/, "");
+  }
+  if (activeBackendUrl && activeBackendUrl !== "https://api.fly2git.com") {
+    return activeBackendUrl.replace(/\/+$/, "");
   }
   if (typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG.BACKEND_API_URL) {
     return FLY2GIT_CONFIG.BACKEND_API_URL.replace(/\/+$/, "");
@@ -279,7 +310,12 @@ function setupAccountUI() {
 
       try {
         const msgType = authModalMode === "register" ? "REGISTER_FLY2GIT_ACCOUNT" : "LOGIN_FLY2GIT_ACCOUNT";
-        const resp = await chrome.runtime.sendMessage({ type: msgType, email, password });
+        const resp = await chrome.runtime.sendMessage({
+          type: msgType,
+          email,
+          password,
+          backendUrl: getBackendUrl(),
+        });
         if (resp && resp.ok) {
           closeAuthModal();
           await updateAccountBar();

@@ -1699,11 +1699,59 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return true;
 
 function getBackendBaseUrl(overrideUrl) {
-  if (overrideUrl) return overrideUrl;
-  if (typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG && FLY2GIT_CONFIG.BACKEND_API_URL) {
-    return FLY2GIT_CONFIG.BACKEND_API_URL;
+  if (overrideUrl && typeof overrideUrl === "string") return overrideUrl.replace(/\/+$/, "");
+  if (typeof FLY2GIT_CONFIG !== "undefined" && FLY2GIT_CONFIG) {
+    if (FLY2GIT_CONFIG.BACKEND_API_URL) return FLY2GIT_CONFIG.BACKEND_API_URL.replace(/\/+$/, "");
+    if (FLY2GIT_CONFIG.BACKEND_URL) return FLY2GIT_CONFIG.BACKEND_URL.replace(/\/+$/, "");
   }
   return "https://api.fly2git.com";
+}
+
+async function fetchBackend(endpoint, options = {}, overrideUrl) {
+  let baseUrl = overrideUrl;
+  if (!baseUrl && typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    try {
+      const stored = await chrome.storage.local.get(["backendUrl", "backendApiUrl"]);
+      if (stored && (stored.backendUrl || stored.backendApiUrl)) {
+        baseUrl = stored.backendUrl || stored.backendApiUrl;
+      }
+    } catch (_) {}
+  }
+  if (!baseUrl) {
+    baseUrl = getBackendBaseUrl();
+  }
+
+  const cleanBase = baseUrl.replace(/\/+$/, "");
+  const targetUrl = `${cleanBase}${endpoint}`;
+
+  try {
+    const res = await fetch(targetUrl, options);
+    return { res, baseUrlUsed: cleanBase };
+  } catch (netErr) {
+    // If canonical production domain failed (e.g. unresolvable DNS or offline during local testing),
+    // probe local dev server on port 8080.
+    if (!overrideUrl && cleanBase.includes("fly2git.com")) {
+      const devCandidate = "http://localhost:8080";
+      try {
+        const probeRes = await fetch(`${devCandidate}/health`, { method: "GET" });
+        if (probeRes.ok) {
+          const fallbackRes = await fetch(`${devCandidate}${endpoint}`, options);
+          try {
+            await chrome.storage.local.set({ backendUrl: devCandidate });
+          } catch (_) {}
+          return { res: fallbackRes, baseUrlUsed: devCandidate };
+        }
+      } catch (_) {
+        // Fallback probe failed, proceed to informative error
+      }
+    }
+    const msg =
+      netErr && netErr.message === "Failed to fetch"
+        ? `Could not connect to Fly2Git backend (${cleanBase}). If testing locally, ensure your server is running on port 8080.`
+        : (netErr && netErr.message) || "Network request failed";
+    const enhancedErr = new Error(msg);
+    throw enhancedErr;
+  }
 }
 
     case "CREATE_CHECKOUT_SESSION":
@@ -1713,19 +1761,22 @@ function getBackendBaseUrl(overrideUrl) {
           sendResponse({ ok: false, error: "UNAUTHENTICATED", message: "Fly2Git backend authentication required" });
           return;
         }
-        const backendUrl = getBackendBaseUrl(message.backendUrl);
         try {
-          const res = await fetch(`${backendUrl}/api/checkout/create-session`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          const { res } = await fetchBackend(
+            "/api/checkout/create-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                plan: message.plan || "pro",
+                billingCycle: message.billingCycle || "monthly",
+              }),
             },
-            body: JSON.stringify({
-              plan: message.plan || "pro",
-              billingCycle: message.billingCycle || "monthly",
-            }),
-          });
+            message.backendUrl
+          );
           const data = await res.json();
           sendResponse(data);
         } catch (err) {
@@ -1741,16 +1792,19 @@ function getBackendBaseUrl(overrideUrl) {
           sendResponse({ ok: false, error: "UNAUTHENTICATED", message: "Fly2Git backend authentication required" });
           return;
         }
-        const backendUrl = getBackendBaseUrl(message.backendUrl);
         try {
-          const res = await fetch(`${backendUrl}/api/billing/portal-session`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          const { res } = await fetchBackend(
+            "/api/billing/portal-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({}),
             },
-            body: JSON.stringify({}),
-          });
+            message.backendUrl
+          );
           const data = await res.json();
           sendResponse(data);
         } catch (err) {
@@ -1795,12 +1849,15 @@ function getBackendBaseUrl(overrideUrl) {
     case "REGISTER_FLY2GIT_ACCOUNT":
       (async () => {
         const { email, password, backendUrl } = message;
-        const baseUrl = getBackendBaseUrl(backendUrl);
-        const resp = await fetch(`${baseUrl}/api/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
+        const { res: resp, baseUrlUsed } = await fetchBackend(
+          "/api/auth/register",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          },
+          backendUrl
+        );
         const data = await resp.json();
         if (!resp.ok || !data.ok) {
           return { ok: false, error: data.error || "Registration failed" };
@@ -1815,7 +1872,7 @@ function getBackendBaseUrl(overrideUrl) {
           userSession: { token: data.token, user: data.user },
           fly2git_session: { token: data.token, user: data.user },
         });
-        await Fly2GitEntitlements.syncBackendEntitlement(data.token, baseUrl);
+        await Fly2GitEntitlements.syncBackendEntitlement(data.token, baseUrlUsed);
         return { ok: true, user: data.user };
       })()
         .then((res) => sendResponse(res))
@@ -1825,12 +1882,15 @@ function getBackendBaseUrl(overrideUrl) {
     case "LOGIN_FLY2GIT_ACCOUNT":
       (async () => {
         const { email, password, backendUrl } = message;
-        const baseUrl = getBackendBaseUrl(backendUrl);
-        const resp = await fetch(`${baseUrl}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
+        const { res: resp, baseUrlUsed } = await fetchBackend(
+          "/api/auth/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          },
+          backendUrl
+        );
         const data = await resp.json();
         if (!resp.ok || !data.ok) {
           return { ok: false, error: data.error || "Login failed" };
@@ -1845,7 +1905,7 @@ function getBackendBaseUrl(overrideUrl) {
           userSession: { token: data.token, user: data.user },
           fly2git_session: { token: data.token, user: data.user },
         });
-        await Fly2GitEntitlements.syncBackendEntitlement(data.token, baseUrl);
+        await Fly2GitEntitlements.syncBackendEntitlement(data.token, baseUrlUsed);
         return { ok: true, user: data.user };
       })()
         .then((res) => sendResponse(res))
