@@ -52,6 +52,29 @@
   var activeDiscoveryTimer = null;
   var currentPollAttempt = 0;
   var isDiscovering = false;
+  var detectedIdentity = null;
+
+  function detectCodeforcesIdentity() {
+    try {
+      var userEl = document.querySelector('a[href^="/profile/"]');
+      var handle = null;
+      if (userEl && userEl.getAttribute("href")) {
+        var m = userEl.getAttribute("href").match(/\/profile\/([^/?#]+)/);
+        if (m) handle = m[1];
+      }
+      if (handle) {
+        detectedIdentity = { username: handle, platformUserId: handle };
+        safeSendMessage({
+          type: "PLATFORM_IDENTITY_DETECTED",
+          platform: "codeforces",
+          identity: detectedIdentity,
+        });
+      }
+    } catch (_) {}
+  }
+
+  detectCodeforcesIdentity();
+  setTimeout(detectCodeforcesIdentity, 1500);
 
   function debug() {
     if (!DEBUG) return;
@@ -180,8 +203,11 @@
     var title = (sub.problem && sub.problem.name) || staging.title || slug;
     var problemUrl = "https://codeforces.com/contest/" + staging.contestId + "/problem/" + staging.problemIndex;
 
+    var authorHandle = (staging && staging.handle) || (detectedIdentity && detectedIdentity.username) || null;
+
     return {
       platform: "codeforces",
+      user: authorHandle ? { username: authorHandle, platformUserId: authorHandle } : null,
       problem: {
         slug: slug,
         title: title,

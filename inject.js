@@ -28,6 +28,7 @@
   var pendingRest = new Map();
   var emittedSubmissionIds = new Set();
   var initializedBySlug = new Map();
+  var initializedSlugs = new Set();
   var lastPath = { value: window.location.pathname };
   var pollTimer = null;
   var acceptedObserver = null;
@@ -57,11 +58,12 @@
     return match ? decodeURIComponent(match[1]) : "";
   }
 
-  function graphql(query, variables, operationName) {
+  function graphql(query, variables, operationName, retriesLeft) {
+    if (typeof retriesLeft !== "number") retriesLeft = 2;
     var csrf = getCsrfToken();
-    var url = window.location.origin + "/graphql/";
+    var primaryUrl = window.location.origin + "/graphql";
 
-    log("GraphQL request", { operationName: operationName, url: url, variables: variables });
+    log("GraphQL request", { operationName: operationName, url: primaryUrl, variables: variables });
 
     return new Promise(function (resolve, reject) {
       var headers = {
@@ -70,32 +72,47 @@
       };
       if (csrf) { headers["x-csrftoken"] = csrf; }
 
-      nativeFetch(url, {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-        mode: "same-origin",
-        headers: headers,
-        body: JSON.stringify({ query: query, variables: variables, operationName: operationName })
-      }).then(function (response) {
-        log("GraphQL HTTP", operationName, response.status);
-        return response.text().then(function (text) {
-          var json;
-          try { json = JSON.parse(text); } catch (e) {
-            return reject(new Error("GraphQL returned non-JSON (" + response.status + "): " + text.slice(0, 300)));
+      function doFetch(targetUrl, allowFallback) {
+        nativeFetch(targetUrl, {
+          method: "POST",
+          credentials: "include",
+          headers: headers,
+          body: JSON.stringify({ query: query, variables: variables, operationName: operationName })
+        }).then(function (response) {
+          log("GraphQL HTTP", operationName, response.status);
+          return response.text().then(function (text) {
+            var json;
+            try { json = JSON.parse(text); } catch (e) {
+              return reject(new Error("GraphQL returned non-JSON (" + response.status + "): " + text.slice(0, 300)));
+            }
+            if (!response.ok) {
+              if (allowFallback && (response.status === 404 || response.status === 301 || response.status === 308)) {
+                return doFetch(window.location.origin + "/graphql/", false);
+              }
+              return reject(new Error("GraphQL HTTP " + response.status + ": " + text.slice(0, 300)));
+            }
+            if (json.errors && json.errors.length) {
+              return reject(new Error(json.errors.map(function (e) { return e.message; }).join("; ")));
+            }
+            resolve(json.data);
+          });
+        }).catch(function (error) {
+          if (allowFallback) {
+            return doFetch(window.location.origin + "/graphql/", false);
           }
-          if (!response.ok) {
-            return reject(new Error("GraphQL HTTP " + response.status + ": " + text.slice(0, 300)));
+          if (retriesLeft > 0) {
+            log("GraphQL request failed, retrying in 600ms...", { operationName: operationName, retriesLeft: retriesLeft });
+            setTimeout(function () {
+              graphql(query, variables, operationName, retriesLeft - 1).then(resolve, reject);
+            }, 600);
+            return;
           }
-          if (json.errors && json.errors.length) {
-            return reject(new Error(json.errors.map(function (e) { return e.message; }).join("; ")));
-          }
-          resolve(json.data);
+          log("GraphQL network request failed", { operationName: operationName, message: error && error.message, url: targetUrl });
+          reject(error);
         });
-      }).catch(function (error) {
-        warn("GraphQL network request failed", { operationName: operationName, message: error && error.message, url: url });
-        reject(error);
-      });
+      }
+
+      doFetch(primaryUrl, true);
     });
   }
 
@@ -251,24 +268,73 @@
       var lang = normalizeLanguage(details, submission.lang);
       var problemSlug = question.titleSlug || slug;
 
+      log("Forwarding accepted submission", { submissionId: submissionId, slug: problemSlug, lang: lang });
+
       window.postMessage(
         {
           source: "fly2git-leetcode",
           type: "ACCEPTED",
           payload: {
+            platform: "leetcode",
+            user: currentDetectedUser ? { username: currentDetectedUser, platformUserId: currentDetectedUser } : null,
+            problem: {
+              slug: problemSlug,
+              title: title,
+              difficulty: difficulty,
+              url: "https://leetcode.com/problems/" + problemSlug + "/",
+            },
+            submission: {
+              id: submissionId,
+              status: "Accepted",
+              language: lang,
+              code: details.code,
+            },
+            metadata: {
+              timestamp: Date.now(),
+            },
             lang: lang,
             code: details.code,
             slug: problemSlug,
             title: title,
             difficulty: difficulty,
             url: "https://leetcode.com/problems/" + problemSlug + "/",
-            submissionId: submissionId
+            submissionId: submissionId,
           }
         },
         window.location.origin
       );
 
       log("Accepted solution forwarded", { submissionId: submissionId, slug: slug, lang: lang });
+    });
+  }
+
+  function forwardLatestAccepted(slug, source, retriesLeft) {
+    if (!slug) return Promise.resolve();
+    if (typeof retriesLeft !== "number") retriesLeft = 3;
+
+    return fetchLatestAccepted(slug).then(function (latest) {
+      var latestId = (latest && latest.id != null) ? String(latest.id) : null;
+      if (!latestId || emittedSubmissionIds.has(latestId)) {
+        if (retriesLeft > 0 && !latestId) {
+          log("Latest submission not ready, retrying in 600ms...", { retriesLeft: retriesLeft });
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              resolve(forwardLatestAccepted(slug, source, retriesLeft - 1));
+            }, 600);
+          });
+        }
+        if (latestId && emittedSubmissionIds.has(latestId)) {
+          log("Submission already emitted, skipping duplicate", latestId);
+        }
+        return;
+      }
+
+      log("Forwarding accepted submission", { submissionId: latestId, slug: slug, source: source });
+      initializedBySlug.set(slug, latestId);
+      initializedSlugs.add(slug);
+      return emitAccepted(latest, slug);
+    }).catch(function (error) {
+      log("Failed to forward latest accepted submission", error && error.message);
     });
   }
 
@@ -280,10 +346,12 @@
       log("Problem route", slug);
     }
     return fetchLatestAccepted(slug).then(function (latest) {
-      initializedBySlug.set(slug, (latest && latest.id) ? String(latest.id) : null);
-      log("Baseline accepted submission", latest ? latest.id : "none");
+      var latestId = (latest && latest.id != null) ? String(latest.id) : null;
+      initializedBySlug.set(slug, latestId);
+      initializedSlugs.add(slug);
+      log("Baseline accepted submission", latestId || "none");
     }).catch(function (error) {
-      warn("Could not initialize GraphQL baseline", error);
+      log("Could not initialize GraphQL baseline, will retry on next poll", error && error.message);
     });
   }
 
@@ -303,8 +371,11 @@
         log("Submission comparison", { latestId: latestId, baseline: baseline });
 
         if (!latestId) return;
-        if (baseline == null) { initializedBySlug.set(slug, latestId); return; }
-        if (latestId !== baseline) {
+        if (!initializedSlugs.has(slug)) {
+          return;
+        }
+        if (latestId !== baseline && !emittedSubmissionIds.has(latestId)) {
+          log("Forwarding accepted submission", { submissionId: latestId, slug: slug, reason: "graphql-poll" });
           initializedBySlug.set(slug, latestId);
           return emitAccepted(latest, slug);
         }
@@ -312,20 +383,28 @@
     }
 
     p.catch(function (error) {
-      warn("GraphQL submission poll failed", error);
+      log("GraphQL submission poll failed", error && error.message);
     }).then(function () {
       pollInFlight = false;
     });
   }
 
   function checkAcceptedPanel() {
-    var panels = document.querySelectorAll("[data-e2e-locator='submission-result']");
+    var panels = document.querySelectorAll("[data-e2e-locator='submission-result'], div[class*='result-state']");
     for (var i = 0; i < panels.length; i++) {
       var panel = panels[i];
-      if (panel.textContent && panel.textContent.trim() === "Accepted") {
+      var text = (panel.textContent || "").trim();
+      if (text === "Accepted" || text.indexOf("Accepted") === 0) {
+        if (panel.__fly2git_processed__) continue;
+        panel.__fly2git_processed__ = true;
         log("Accepted panel detected");
-        pollAccepted();
+        var slug = getSlug();
+        if (slug) {
+          forwardLatestAccepted(slug, "accepted-panel");
+        }
         return;
+      } else if (text === "Pending" || text === "Judging" || text === "Compiling") {
+        panel.__fly2git_processed__ = false;
       }
     }
   }
@@ -336,6 +415,16 @@
       return;
     }
 
+    // Mark any pre-existing Accepted panel on initial page load as processed so historical submissions are not blindly synced
+    var existingPanels = document.querySelectorAll("[data-e2e-locator='submission-result'], div[class*='result-state']");
+    for (var k = 0; k < existingPanels.length; k++) {
+      if ((existingPanels[k].textContent || "").trim().indexOf("Accepted") === 0) {
+        existingPanels[k].__fly2git_processed__ = true;
+      }
+    }
+
+    detectUser();
+
     acceptedObserver = new MutationObserver(function () {
       checkAcceptedPanel();
     });
@@ -343,17 +432,19 @@
 
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(function () {
-      if (window.location.pathname !== lastPath.value) {
+      var slug = getSlug();
+      if (slug && slug !== currentSlug) {
         lastPath.value = window.location.pathname;
-        var slug = getSlug();
-        currentSlug = null;
-        if (slug) initializeSlug(slug);
+        currentSlug = slug;
+        initializeSlug(slug);
+      } else {
+        lastPath.value = window.location.pathname;
       }
       pollAccepted();
     }, POLL_MS);
 
-    var slug = getSlug();
-    if (slug) initializeSlug(slug);
+    var initSlug = getSlug();
+    if (initSlug) initializeSlug(initSlug);
     log("LeetCode adapter loaded");
   }
 
@@ -408,7 +499,31 @@
       });
     };
   } catch (error) {
-    warn("Could not install legacy fetch fallback", error);
+    log("Could not install legacy fetch fallback", error);
+  }
+
+  var currentDetectedUser = null;
+  function detectUser() {
+    graphql(
+      "query globalData { userStatus { isSignedIn username userSlug } }",
+      {},
+      "globalData"
+    ).then(function (data) {
+      if (data && data.userStatus && data.userStatus.isSignedIn) {
+        var u = data.userStatus.userSlug || data.userStatus.username;
+        if (u) {
+          currentDetectedUser = u;
+          window.postMessage(
+            {
+              source: "fly2git-leetcode",
+              type: "IDENTITY_DETECTED",
+              payload: { username: u, platformUserId: u }
+            },
+            window.location.origin
+          );
+        }
+      }
+    }).catch(function () {});
   }
 
   startObservers();

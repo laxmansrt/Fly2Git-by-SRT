@@ -1,92 +1,1182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fly2Git by SRT — Your Coding Practice OS</title>
+  <link rel="stylesheet" href="design-tokens.css" />
   <link rel="stylesheet" href="popup.css" />
+  <link rel="stylesheet" href="liquid-glass.css" />
 </head>
 <body>
-  <header>
-    <img src="icons/icon48.png" alt="Fly2Git" />
-    <div>
-      <h1>Fly2Git <span class="by-srt">by SRT</span></h1>
-      <p class="tagline">Solve it. Ship it.</p>
+  <!-- Ambient Spatial Depth Layer -->
+  <div class="ambient-layer" aria-hidden="true"></div>
+
+  <!-- Cockpit Header Component -->
+  <header class="app-header">
+    <div class="brand-group">
+      <img src="icons/icon48.png" alt="Fly2Git" class="brand-logo" width="28" height="28" />
+      <div class="brand-meta">
+        <h1 class="brand-title">Fly2Git <span class="by-srt">by SRT</span></h1>
+        <p class="tagline">Your Coding Practice OS</p>
+      </div>
+    </div>
+    <div id="headerStatusBadge" class="header-status-badge disconnected" role="status" aria-live="polite">
+      <span class="status-pulse-dot"></span>
+      <span id="headerStatusLabel" class="status-label">Offline</span>
     </div>
   </header>
 
-  <!-- State 1: not connected -->
-  <section id="connectView">
-    <p class="lead">
-      Connect GitHub and choose exactly which repository Fly2Git can access —
-      not your whole account.
-    </p>
-    <button id="connectBtn">Connect GitHub</button>
-  </section>
-
-  <!-- State 2: device flow in progress -->
-  <section id="deviceFlowView" class="hidden">
-    <p class="lead">Enter this code on GitHub to connect:</p>
-    <div id="userCode" class="user-code">— — — —</div>
-    <button id="openGithubBtn">Open GitHub</button>
-    <p class="hint" id="deviceFlowStatus">Waiting for authorization…</p>
-  </section>
-
-  <!-- State 3: connected, no repo selected yet -->
-  <section id="repoPickerView" class="hidden">
-    <p class="lead">Select the repository Fly2Git should sync to:</p>
-    <select id="repoSelect"></select>
-    <button id="saveRepoBtn">Use this repository</button>
-    <p class="hint">
-      Don't see your repo?
-      <a id="installMoreLink" href="#" target="_blank">Grant Fly2Git access to more repos</a>
-    </p>
-  </section>
-
-  <!-- State 4: fully configured -->
-  <section id="activeView" class="hidden">
-    <div class="active-repo">
-      <span class="dot"></span>
-      <div>
-        <strong id="activeRepoName"></strong>
-        <div class="hint">Syncing accepted solutions here</div>
+  <!-- Fly2Git Account Quick Bar (Global Top State) -->
+  <div id="accountBar" class="account-bar">
+    <div id="accountLoggedOutView" class="account-view">
+      <span class="account-status-text">Account: Guest</span>
+      <div class="account-actions">
+        <button id="openSignInBtn" class="account-link-btn" type="button">Sign in</button>
+        <span class="account-divider">·</span>
+        <button id="openSignUpBtn" class="account-link-btn" type="button">Create account</button>
       </div>
     </div>
-    <button id="changeRepoBtn" class="secondary">Change repository</button>
-
-    <!-- State 4a: Last sync status banner -->
-    <div id="lastSyncBanner" class="last-sync-banner hidden">
-      <span id="lastSyncIcon" class="last-sync-icon"></span>
-      <div class="last-sync-details">
-        <span id="lastSyncText" class="last-sync-text"></span>
-        <span id="lastSyncTime" class="last-sync-time"></span>
+    <div id="accountLoggedInView" class="account-view hidden">
+      <span id="accountUserEmail" class="account-user-email"></span>
+      <div class="account-actions">
+        <button id="accountManageBtn" class="account-link-btn" type="button">Manage</button>
+        <span class="account-divider">·</span>
+        <button id="accountLogoutBtn" class="account-link-btn" type="button">Logout</button>
       </div>
     </div>
+  </div>
 
-    <!-- State 4b: Platform selection & plan -->
-    <div class="plan-card">
-      <div class="plan-header">
-        <span class="plan-title">Plan</span>
-        <span id="planBadge" class="plan-badge">Basic — Free</span>
+  <!-- State 1: Not connected -->
+  <section id="connectView" class="view-panel">
+    <div class="glass-card welcome-card glass-02">
+      <div class="hero-icon-ring">
+        <svg class="gh-hero-svg" viewBox="0 0 16 16" width="30" height="30" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
       </div>
-
-      <div class="platforms-subheading">
-        <span class="subheading-title">Platforms</span>
-        <span id="platformsLimitHint" class="platforms-limit-hint">(Choose any 2)</span>
+      <h2 class="welcome-title">Connect your GitHub</h2>
+      <p class="lead">
+        Authorize Fly2Git to sync accepted code solutions directly into your chosen GitHub repository.
+      </p>
+      <button id="connectBtn" class="primary-btn">
+        <span>Connect GitHub</span>
+        <span class="btn-arrow">→</span>
+      </button>
+      <div class="security-pill">
+        <span class="lock-icon">🔒</span>
+        <span>Repository-level access · Zero secret storage</span>
       </div>
-
-      <div id="platformsList" class="platforms-list"></div>
-      <div id="platformMessage" class="platform-message hidden"></div>
     </div>
-
-    <div class="sync-log-header">
-      <h2>Recent syncs</h2>
-      <button id="clearSyncLogBtn" class="clear-btn hidden" title="Clear sync history">Clear</button>
-    </div>
-    <ul id="syncLogList" class="sync-log"></ul>
-
-    <button id="disconnectBtn" class="secondary danger">Disconnect GitHub</button>
   </section>
 
-  <footer>
+  <!-- State 2: Device flow in progress -->
+  <section id="deviceFlowView" class="view-panel hidden">
+    <div class="glass-card glass-02">
+      <div class="card-eyebrow">DEVICE AUTHORIZATION</div>
+      <p class="lead">Enter this one-time code on GitHub to authorize Fly2Git:</p>
+      <div id="userCode" class="user-code">— — — —</div>
+      <button id="openGithubBtn" class="primary-btn">
+        <span>Open GitHub</span>
+        <span class="btn-arrow">↗</span>
+      </button>
+      <div class="status-pulse-row">
+        <span class="status-pulse-dot warning"></span>
+        <p class="hint" id="deviceFlowStatus">Waiting for authorization…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- State 3: Connected, no repo selected yet -->
+  <section id="repoPickerView" class="view-panel hidden">
+    <div class="glass-card glass-02">
+      <div class="card-eyebrow">TARGET REPOSITORY</div>
+      <p class="lead">Select the repository where Fly2Git should sync your accepted code:</p>
+      <div class="select-wrapper">
+        <select id="repoSelect"></select>
+      </div>
+      <div id="repoPickerNotice" class="platform-message hidden"></div>
+      <button id="saveRepoBtn" class="primary-btn">Use this repository</button>
+      <p class="hint">
+        Don't see your repo?
+        <a id="installMoreLink" href="#" target="_blank" rel="noopener noreferrer">Grant access to more repos →</a>
+      </p>
+      <div class="multi-repo-banner">
+        <span class="multi-repo-icon">✦</span>
+        <div class="multi-repo-info">
+          <span class="multi-repo-title">Multiple repositories</span>
+          <span class="coming-soon-pill">Coming soon</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- State 4: Fully configured Developer Intelligence Cockpit -->
+  <section id="activeView" class="view-panel hidden">
+
+    <!-- Compact Cockpit Navigation Bar -->
+    <nav id="cockpitNav" class="cockpit-nav" role="tablist" aria-label="Cockpit navigation">
+      <button id="navTabHome" class="cockpit-nav-btn active" role="tab" aria-selected="true" aria-controls="tabPanelHome" data-tab="home" tabindex="0">
+        <svg class="cockpit-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 6.5l5.5-4.5 5.5 4.5v6.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z"/>
+          <path d="M6 14v-5h4v5"/>
+        </svg>
+        <span class="cockpit-nav-label">Home</span>
+        <span class="nav-active-pip"></span>
+      </button>
+      <button id="navTabJourney" class="cockpit-nav-btn" role="tab" aria-selected="false" aria-controls="tabPanelJourney" data-tab="journey" tabindex="-1">
+        <svg class="cockpit-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M10.5 5.5l-2.1 5.3-3.2-3.2z"/>
+        </svg>
+        <span class="cockpit-nav-label">Journey</span>
+        <span class="nav-active-pip"></span>
+      </button>
+      <button id="navTabSync" class="cockpit-nav-btn" role="tab" aria-selected="false" aria-controls="tabPanelSync" data-tab="sync" tabindex="-1">
+        <svg class="cockpit-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 8A6 6 0 1 0 3 11.5"/>
+          <polyline points="2.5 7.5 3 11.5 7 12"/>
+          <path d="M2 8a6 6 0 0 1 11-3.5"/>
+          <polyline points="13.5 8.5 13 4.5 9 4"/>
+        </svg>
+        <span class="cockpit-nav-label">Sync</span>
+        <span class="nav-active-pip"></span>
+      </button>
+      <button id="navTabSettings" class="cockpit-nav-btn" role="tab" aria-selected="false" aria-controls="tabPanelSettings" data-tab="settings" tabindex="-1">
+        <svg class="cockpit-nav-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="2.5"/>
+          <path d="M13.5 9.5a1.2 1.2 0 0 0 .25 1.35l.05.05a1.4 1.4 0 1 1-2 2l-.05-.05a1.2 1.2 0 0 0-1.35-.25 1.2 1.2 0 0 0-.75 1.1v.1a1.4 1.4 0 1 1-2.8 0v-.1a1.2 1.2 0 0 0-.75-1.1 1.2 1.2 0 0 0-1.35.25l-.05.05a1.4 1.4 0 1 1-2-2l.05-.05a1.2 1.2 0 0 0 .25-1.35 1.2 1.2 0 0 0-1.1-.75h-.1a1.4 1.4 0 1 1 0-2.8h.1a1.2 1.2 0 0 0 1.1-.75 1.2 1.2 0 0 0-.25-1.35l-.05-.05a1.4 1.4 0 1 1 2-2l.05.05a1.2 1.2 0 0 0 1.35.25h.1a1.2 1.2 0 0 0 .75-1.1v-.1a1.4 1.4 0 1 1 2.8 0v.1a1.2 1.2 0 0 0 .75 1.1 1.2 1.2 0 0 0 1.35-.25l.05-.05a1.4 1.4 0 1 1 2 2l-.05.05a1.2 1.2 0 0 0-.25 1.35v.1a1.2 1.2 0 0 0 1.1.75h.1a1.4 1.4 0 1 1 0 2.8h-.1a1.2 1.2 0 0 0-1.1.75z"/>
+        </svg>
+        <span class="cockpit-nav-label">Settings</span>
+        <span class="nav-active-pip"></span>
+      </button>
+    </nav>
+
+    <!-- ====================================================================
+         PANEL 1: HOME — DEVELOPER COCKPIT
+         ==================================================================== -->
+    <div id="tabPanelHome" class="cockpit-panel active" role="tabpanel" aria-labelledby="navTabHome">
+      
+      <!-- 1. Live Coding Context — Current Problem Card -->
+      <div id="currentProblemCard" class="glass-card current-problem-card glass-03">
+        <!-- Active Session State -->
+        <div id="activeSessionBox" class="active-session-box hidden">
+          <div class="problem-card-top">
+            <div class="problem-platform-tag">
+              <img id="currentProblemPlatformLogo" class="platform-mini-logo" src="assets/platforms/default.svg" alt="Platform" width="14" height="14" />
+              <span id="currentProblemPlatformName" class="platform-mini-name">LeetCode</span>
+            </div>
+            <div class="problem-status-pill">
+              <span class="status-pulse-dot online"></span>
+              <span id="currentProblemSyncStatus" class="problem-sync-label">Sync ready</span>
+            </div>
+          </div>
+
+          <div class="problem-identity-row">
+            <h2 id="currentProblemTitle" class="current-problem-title">Two Sum</h2>
+            <div class="problem-badges-row">
+              <span id="currentProblemDifficulty" class="diff-badge medium">Medium</span>
+              <span id="currentProblemLanguage" class="lang-badge">Python</span>
+            </div>
+          </div>
+
+          <!-- Phase 16.4: Post-Acceptance Complexity Intelligence -->
+          <section id="problemComplexitySection" class="problem-complexity-card glass-03" aria-label="Complexity Intelligence">
+            <div class="complexity-header-row">
+              <span class="complexity-eyebrow">COMPLEXITY</span>
+              <div id="complexityConfidenceBadge" class="complexity-confidence-badge" title="Analysis Confidence">
+                <span id="complexityConfidenceDot" class="confidence-indicator-dot high"></span>
+                <span id="complexityConfidenceText" class="confidence-text">HIGH CONFIDENCE</span>
+              </div>
+            </div>
+
+            <!-- Big-O Analyzed Grid (Time / Space) -->
+            <div id="complexityGrid" class="complexity-grid">
+              <div class="complexity-cell" id="complexityTimeCell">
+                <div class="complexity-cell-header">
+                  <span class="complexity-dim-label">TIME</span>
+                  <span id="complexityTimeSource" class="complexity-source-pill">AI ANALYSIS</span>
+                </div>
+                <div id="complexityTimeValue" class="complexity-value">O(n)</div>
+                <div id="complexityTimeHuman" class="complexity-human-label">Linear</div>
+              </div>
+              <div class="complexity-cell" id="complexitySpaceCell">
+                <div class="complexity-cell-header">
+                  <span class="complexity-dim-label">SPACE</span>
+                  <span id="complexitySpaceSource" class="complexity-source-pill">AI ANALYSIS</span>
+                </div>
+                <div id="complexitySpaceValue" class="complexity-value">O(n)</div>
+                <div id="complexitySpaceHuman" class="complexity-human-label">Linear</div>
+              </div>
+            </div>
+
+            <!-- Measured Platform Results (Runtime / Memory) -->
+            <div class="measured-section" id="complexityMeasuredSection">
+              <div class="measured-header">
+                <span class="measured-eyebrow">MEASURED</span>
+                <span id="complexityMeasuredSource" class="measured-source-tag">PLATFORM</span>
+              </div>
+              <div id="complexityMeasuredMetrics" class="measured-metrics-grid">
+                <div class="measured-metric-item">
+                  <span class="measured-label">RUNTIME</span>
+                  <span id="complexityRuntimeVal" class="measured-num">42 ms</span>
+                </div>
+                <div class="measured-metric-item">
+                  <span class="measured-label">MEMORY</span>
+                  <span id="complexityMemoryVal" class="measured-num">18.2 MB</span>
+                </div>
+              </div>
+              <div id="complexityMeasuredUnavailable" class="measured-unavailable-msg hidden">
+                Platform runtime data unavailable
+              </div>
+            </div>
+
+            <!-- Why Section -->
+            <div class="complexity-why-section" id="complexityWhySection">
+              <div class="why-eyebrow">WHY</div>
+              <p id="complexityWhyText" class="why-text">
+                The solution traverses the input once. HashMap lookup is expected O(1), giving overall O(n) time.
+              </p>
+            </div>
+
+            <!-- Contextual History Anchor (Optional) -->
+            <div id="complexityHistoryAnchor" class="complexity-history-anchor hidden">
+              <span class="history-anchor-icon">◈</span>
+              <span id="complexityHistoryText" class="history-anchor-text">You've used HashMap in 14 observed solutions.</span>
+            </div>
+
+            <!-- Loading State Overlay -->
+            <div id="complexityLoadingOverlay" class="complexity-loading-overlay hidden">
+              <span class="loading-spinner-pip"></span>
+              <span class="loading-status-text">Analyzing complexity...</span>
+            </div>
+
+            <!-- Empty / Fallback State -->
+            <div id="complexityEmptyBox" class="complexity-empty-box hidden">
+              <p id="complexityEmptyMsg" class="complexity-empty-msg">Time / Space analysis unavailable.</p>
+              <button id="analyzeComplexityBtn" class="secondary-btn xs" type="button">Analyze with AI</button>
+            </div>
+          </section>
+
+          <!-- Contextual Relationship with History -->
+          <div id="currentProblemContextRelation" class="context-relation-row hidden">
+            <span class="relation-icon">◈</span>
+            <span id="contextRelationText" class="relation-text">3 related problems in your history</span>
+          </div>
+
+          <!-- Quick Actions: Analyze, Explain, Hint -->
+          <div class="problem-actions-grid">
+            <button id="quickAnalyzeBtn" class="cockpit-action-btn primary" type="button">
+              <span class="btn-icon">⚡</span>
+              <span>Analyze</span>
+            </button>
+            <button id="quickExplainBtn" class="cockpit-action-btn" type="button">
+              <span class="btn-icon">📖</span>
+              <span>Explain</span>
+            </button>
+            <button id="quickHintBtn" class="cockpit-action-btn" type="button">
+              <span class="btn-icon">💡</span>
+              <span>Hint</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty Session State (Calm, contextual, non-distracting) -->
+        <div id="noActiveSessionBox" class="no-session-box">
+          <div class="no-session-icon-wrap">
+            <svg class="no-session-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m4.93 4.93 4.24 4.24"/>
+              <path d="m14.83 9.17 4.24-4.24"/>
+              <path d="m14.83 14.83 4.24 4.24"/>
+              <path d="m9.17 14.83-4.24 4.24"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <div class="no-session-meta">
+            <span class="no-session-eyebrow">NO ACTIVE CODING SESSION</span>
+            <p class="no-session-desc">Open a supported coding problem to bring Fly2Git context here.</p>
+          </div>
+          <div class="ecosystem-mini-row" title="Supported coding platforms">
+            <img src="assets/platforms/leetcode.svg" alt="LeetCode" width="13" height="13" />
+            <img src="assets/platforms/geeksforgeeks.svg" alt="GeeksforGeeks" width="13" height="13" />
+            <img src="assets/platforms/codeforces.svg" alt="Codeforces" width="13" height="13" />
+            <img src="assets/platforms/hackerrank.svg" alt="HackerRank" width="13" height="13" />
+            <img src="assets/platforms/codechef.svg" alt="CodeChef" width="13" height="13" />
+            <img src="assets/platforms/atcoder.svg" alt="AtCoder" width="13" height="13" />
+            <img src="assets/platforms/spoj.svg" alt="SPOJ" width="13" height="13" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Today's Activity Bento Metrics -->
+      <div id="todayActivityBento" class="today-bento-grid">
+        <div class="bento-tile glass-02">
+          <div class="bento-metric-row">
+            <span id="homeStatProblems" class="type-numeric bento-value">0</span>
+            <span class="bento-unit">solved</span>
+          </div>
+          <span class="bento-label">Practice Activity</span>
+        </div>
+        <div class="bento-tile glass-02">
+          <div class="bento-metric-row">
+            <span id="homeStatPlatforms" class="type-numeric bento-value">0</span>
+            <span class="bento-unit">active</span>
+          </div>
+          <span class="bento-label">Platforms</span>
+        </div>
+        <div class="bento-tile glass-02">
+          <div class="bento-metric-row">
+            <span id="homeStatStreak" class="type-numeric bento-value">0</span>
+            <span class="bento-unit">days</span>
+          </div>
+          <span class="bento-label">Active Streak</span>
+        </div>
+        <div class="bento-tile glass-02">
+          <div class="bento-metric-row">
+            <span id="homeStatSuccess" class="type-numeric bento-value">100%</span>
+            <span class="bento-unit">synced</span>
+          </div>
+          <span class="bento-label">Reliability</span>
+        </div>
+      </div>
+
+      <!-- 3. AI Intelligence Card (Integrated Surface) -->
+      <div id="aiIntelligenceCard" class="glass-card ai-intelligence-card glass-02">
+        <div class="ai-card-header">
+          <div class="ai-title-group">
+            <div class="ai-header-badge">AI</div>
+            <h2>CODING INTELLIGENCE</h2>
+            <span id="aiPlanBadge" class="plan-pill pro">PRO</span>
+          </div>
+          <div class="ai-quota-indicator" id="aiQuotaIndicator" title="Monthly AI requests">
+            <span class="ai-quota-label">Quota:</span>
+            <span id="aiQuotaCount" class="ai-quota-count">Active</span>
+          </div>
+        </div>
+
+        <!-- Current Problem Context Pill inside AI -->
+        <div id="aiContextBar" class="ai-context-bar">
+          <span class="ai-context-icon">⚡</span>
+          <div class="ai-context-meta">
+            <span id="aiContextPlatform" class="ai-context-platform">Ready</span>
+            <span class="ai-context-sep">·</span>
+            <span id="aiContextTitle" class="ai-context-title">Detecting problem context...</span>
+          </div>
+          <button id="aiRefreshContextBtn" class="ai-refresh-btn" type="button" title="Refresh current tab context">↻</button>
+        </div>
+
+        <!-- Action Selector Buttons: Analyze / Explain / Hint -->
+        <div class="ai-actions-row">
+          <button id="aiTabAnalyze" class="ai-action-btn active" type="button" data-feature="analyze">
+            <span class="ai-btn-title">AI Analyze</span>
+            <span class="ai-btn-sub">Understand your approach</span>
+          </button>
+          <button id="aiTabExplain" class="ai-action-btn" type="button" data-feature="explain">
+            <span class="ai-btn-title">Explain</span>
+            <span class="ai-btn-sub">Break down your solution</span>
+          </button>
+          <button id="aiTabHint" class="ai-action-btn" type="button" data-feature="hint">
+            <span class="ai-btn-title">Hint</span>
+            <span class="ai-btn-sub">Get the next step</span>
+          </button>
+        </div>
+
+        <!-- Hint Depth Selector (visible only when Hint is selected) -->
+        <div id="aiHintSelectorRow" class="ai-hint-selector-row hidden">
+          <span class="hint-selector-label">Hint Depth:</span>
+          <div class="hint-pills-group">
+            <button type="button" class="hint-depth-pill active" data-level="1" title="Conceptual Direction">1: Idea</button>
+            <button type="button" class="hint-depth-pill" data-level="2" title="Pattern &amp; Structure">2: Pattern</button>
+            <button type="button" class="hint-depth-pill" data-level="3" title="Next Logical Step">3: Next Step</button>
+            <button type="button" class="hint-depth-pill" data-level="4" title="Near-Solution Guidance">4: Guidance</button>
+          </div>
+        </div>
+
+        <!-- Optional Error Context Toggle -->
+        <div class="ai-optional-error-section">
+          <button id="aiToggleErrorBtn" class="ai-toggle-error-link" type="button">+ Add runtime/compiler error context</button>
+          <div id="aiErrorBox" class="ai-error-input-box hidden">
+            <textarea id="aiErrorInput" class="ai-error-textarea" placeholder="Paste optional compiler error or runtime exception..." rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Run Action Button -->
+        <div class="ai-run-section">
+          <button id="aiExecuteBtn" class="primary-btn sm full-width" type="button">
+            <span id="aiExecuteBtnText">Run AI Analyze</span>
+            <span class="btn-sparkle">✦</span>
+          </button>
+        </div>
+
+        <!-- State: Loading Skeleton -->
+        <div id="aiLoadingBox" class="ai-state-box hidden">
+          <div class="ai-loading-spinner"></div>
+          <p id="aiLoadingMessage" class="ai-state-text">Analyzing your approach...</p>
+        </div>
+
+        <!-- State: Error / Limit Reached -->
+        <div id="aiErrorBoxNotice" class="ai-notice-box error hidden">
+          <span class="ai-notice-icon">⚠️</span>
+          <div class="ai-notice-body">
+            <strong id="aiNoticeTitle" class="ai-notice-title">AI Request Failed</strong>
+            <p id="aiNoticeText" class="ai-notice-text">Unable to complete request. Please try again.</p>
+          </div>
+        </div>
+
+        <!-- State: Structured Results Container -->
+        <div id="aiResultsContainer" class="ai-results-container hidden">
+          <!-- Rendered dynamically by popup.js -->
+        </div>
+
+        <!-- AI Privacy Footer -->
+        <div class="ai-privacy-footer">
+          <span>🔒 In-memory analysis. Solution code is never persisted or logged.</span>
+        </div>
+      </div>
+
+      <!-- 4. GitHub Sync Quick Banner -->
+      <div id="homeSyncBanner" class="glass-card home-sync-banner glass-02">
+        <div class="home-sync-left">
+          <svg class="gh-mini-svg" viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          <div class="home-sync-meta">
+            <span class="home-sync-label">TARGET REPOSITORY</span>
+            <strong id="homeSyncRepoName" class="home-sync-name">Not selected</strong>
+          </div>
+        </div>
+        <button id="homeManageSyncBtn" class="cockpit-link-btn" type="button">
+          <span>Manage Sync</span>
+          <span class="chevron">›</span>
+        </button>
+      </div>
+
+      <!-- 5. Journey Preview Teaser -->
+      <div id="homeJourneyPreview" class="glass-card home-journey-preview glass-02">
+        <div class="journey-preview-header">
+          <span class="card-eyebrow">CODING JOURNEY PREVIEW</span>
+          <button id="homeExploreJourneyBtn" class="cockpit-link-btn" type="button">
+            <span>Explore Journey</span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+        <p id="homeJourneyObservation" class="journey-preview-text">
+          "Practice patterns and trajectory will appear as you sync accepted solutions."
+        </p>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         PANEL 2: JOURNEY — CODING JOURNEY & INTELLIGENCE
+         ==================================================================== -->
+    <div id="tabPanelJourney" class="cockpit-panel hidden" role="tabpanel" aria-labelledby="navTabJourney">
+      
+      <!-- Fly2Git AI Coach -->
+      <div id="aiCoachCard" class="glass-card ai-coach-card glass-02">
+        <div class="coach-header">
+          <div class="coach-title-group">
+            <h2>PERSONAL CODING COACH</h2>
+            <span class="card-eyebrow-text">OBJECTIVE PRACTICE GUIDANCE</span>
+          </div>
+          <div id="coachStreakPill" class="coach-streak-pill" title="Consecutive active practice days">
+            <span>🔥</span> <span id="coachStreakCount">0</span> day streak
+          </div>
+        </div>
+
+        <!-- Quick Metrics Overview -->
+        <div class="coach-quick-metrics">
+          <span id="coachDifficultyBadge" class="coach-metric-badge">--% Medium</span>
+          <span id="coachLanguagesBadge" class="coach-metric-badge">-- languages</span>
+          <span id="coachPlatformsBadge" class="coach-metric-badge">-- platforms</span>
+        </div>
+
+        <!-- Mode Selector Pills -->
+        <div class="coach-modes-row">
+          <button type="button" class="coach-mode-pill active" data-mode="daily">Daily</button>
+          <button type="button" class="coach-mode-pill" data-mode="weekly">Weekly</button>
+          <button type="button" class="coach-mode-pill" data-mode="balance">Balance</button>
+          <button type="button" class="coach-mode-pill" data-mode="portfolio">Portfolio</button>
+          <button type="button" class="coach-mode-pill" data-mode="reflection">Reflect</button>
+        </div>
+
+        <!-- Observed Pattern Section -->
+        <div class="coach-section-box">
+          <span class="coach-section-label">OBSERVED</span>
+          <p id="coachObservedText" class="coach-observed-text">Sync solutions to view your practice patterns.</p>
+        </div>
+
+        <!-- Today's Direction Section -->
+        <div class="coach-section-box highlight">
+          <div class="coach-direction-header">
+            <span id="coachDirectionLabel" class="coach-section-label">TODAY'S DIRECTION</span>
+          </div>
+          <p id="coachDirectionText" class="coach-direction-text">Select a practice mode to generate tailored guidance.</p>
+          <button id="coachStartPracticeBtn" class="primary-btn sm coach-action-btn hidden" type="button">Start Practice</button>
+        </div>
+
+        <!-- Reflection Prompt Section -->
+        <div class="coach-section-box">
+          <span class="coach-section-label">REFLECT</span>
+          <p id="coachReflectText" class="coach-reflect-text">What problem pattern felt most challenging recently?</p>
+        </div>
+
+        <!-- Coding Balance Grid (shown on Balance / Portfolio mode) -->
+        <div id="coachBalanceGrid" class="coach-balance-grid hidden">
+          <div class="balance-card">
+            <span class="balance-title">Difficulty Balance</span>
+            <p id="balanceDifficultyText" class="balance-desc">--</p>
+          </div>
+          <div class="balance-card">
+            <span class="balance-title">Language Focus</span>
+            <p id="balanceLanguageText" class="balance-desc">--</p>
+          </div>
+          <div class="balance-card">
+            <span class="balance-title">Platform Ecosystem</span>
+            <p id="balancePlatformText" class="balance-desc">--</p>
+          </div>
+          <div class="balance-card">
+            <span class="balance-title">Cadence Consistency</span>
+            <p id="balanceConsistencyText" class="balance-desc">--</p>
+          </div>
+        </div>
+
+        <div class="coach-footer-actions">
+          <button id="coachRefreshBtn" class="secondary sm full-width" type="button">↻ Refresh Coaching Insights</button>
+        </div>
+
+        <div class="ai-privacy-footer">
+          <span>🔒 Objective coaching based strictly on sync metadata. Zero skill scoring.</span>
+        </div>
+      </div>
+
+      <!-- Coding Intelligence (Patterns, Timeline, Exploration) -->
+      <div id="codingIntelligenceCard" class="glass-card coding-intelligence-card glass-02">
+        <div class="coach-header">
+          <div class="coach-title-group">
+            <h2>CODING INTELLIGENCE</h2>
+            <span class="sub-lead">Pattern Activity &amp; Navigation</span>
+          </div>
+          <button id="intelRefreshBtn" class="secondary sm" type="button" title="Refresh Intelligence">↻</button>
+        </div>
+
+        <!-- Current Problem Context Section -->
+        <div id="intelProblemSection" class="coach-section-box highlight">
+          <span class="coach-section-label">CURRENT PROBLEM CONTEXT</span>
+          <div id="intelProblemDetails" class="intel-details-box">
+            <p id="intelProblemTitle" class="coach-observed-text">Navigate to a problem to see related personal practice history.</p>
+            <div id="intelProblemStats" class="intel-stats-row hidden">
+              <span id="intelObservedCountBadge" class="coach-metric-badge">0 observed</span>
+              <span id="intelSamePlatBadge" class="coach-metric-badge">0 on this platform</span>
+            </div>
+            <div id="intelRelatedPillList" class="intel-tag-list hidden"></div>
+          </div>
+        </div>
+
+        <!-- Pattern Activity Section -->
+        <div id="intelPatternSection" class="coach-section-box">
+          <span class="coach-section-label">TOP PRACTICED PATTERNS</span>
+          <div id="intelPatternList" class="intel-pattern-list">
+            <p class="coach-observed-text">Sync solutions with topic tags to view pattern activity.</p>
+          </div>
+        </div>
+
+        <!-- Coding Journey Timeline Section -->
+        <div id="intelJourneySection" class="coach-section-box">
+          <span class="coach-section-label">CODING JOURNEY TIMELINE</span>
+          <div id="intelJourneyList" class="intel-journey-list">
+            <p class="coach-observed-text">Historical timeline will appear as your sync history grows.</p>
+          </div>
+        </div>
+
+        <!-- Exploration Opportunities Section -->
+        <div id="intelExplorationSection" class="coach-section-box">
+          <span class="coach-section-label">EXPLORATION OPPORTUNITIES</span>
+          <div id="intelExplorationList" class="intel-exploration-list">
+            <p class="coach-observed-text">No active exploration candidates identified yet.</p>
+          </div>
+        </div>
+
+        <div class="ai-privacy-footer">
+          <span>🔒 Pure observation &amp; navigation. Zero skill scores, ratings, or rankings.</span>
+        </div>
+      </div>
+
+      <!-- Personal Coding Analytics Dashboard -->
+      <div id="analyticsCard" class="glass-card analytics-card glass-02">
+        <div class="analytics-card-header">
+          <div class="analytics-title-group">
+            <h2>PERSONAL ANALYTICS</h2>
+            <span id="analyticsBadge" class="plan-pill pro hidden">PRO</span>
+          </div>
+          <!-- Time Range Selector for Pro -->
+          <div id="analyticsRangePills" class="analytics-range-pills hidden">
+            <button class="range-pill" data-range="7d">7D</button>
+            <button class="range-pill active" data-range="30d">30D</button>
+            <button class="range-pill" data-range="90d">90D</button>
+            <button class="range-pill" data-range="all">All</button>
+          </div>
+        </div>
+
+        <!-- Basic Teaser (Compact) -->
+        <div id="analyticsBasicTeaser" class="analytics-basic-teaser">
+          <div class="analytics-teaser-body">
+            <p class="analytics-teaser-title">See your coding activity, platforms and progress with Pro.</p>
+            <p class="analytics-teaser-sub">Track active streaks, language distributions, and sync reliability.</p>
+          </div>
+          <button id="upgradeForAnalyticsBtn" class="primary-btn sm">Upgrade to Pro</button>
+        </div>
+
+        <!-- Pro Analytics Dashboard -->
+        <div id="analyticsProDashboard" class="analytics-pro-dashboard hidden">
+          <!-- Stat Grid -->
+          <div class="analytics-stat-grid">
+            <div class="stat-card">
+              <span class="stat-value" id="statTotalProblems">0</span>
+              <span class="stat-label">Problems</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="statStreak">0</span>
+              <span class="stat-label">Day Streak</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="statSuccessRate">100%</span>
+              <span class="stat-label">Sync Success</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="statPlatforms">0</span>
+              <span class="stat-label">Platforms</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="statLanguages">0</span>
+              <span class="stat-label">Languages</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="statSkipped">0</span>
+              <span class="stat-label">Skipped</span>
+            </div>
+          </div>
+
+          <!-- Activity Timeline Chart -->
+          <div class="analytics-chart-section">
+            <div class="chart-header">
+              <span class="chart-title">Activity Timeline</span>
+              <span id="chartRangeLabel" class="chart-range-label">Last 30 Days</span>
+            </div>
+            <div id="activityChartBars" class="activity-chart-bars"></div>
+          </div>
+
+          <!-- Breakdowns: Platforms, Difficulties, Languages -->
+          <div class="analytics-breakdown-section">
+            <div class="breakdown-group">
+              <span class="breakdown-title">Platforms</span>
+              <div id="platformBreakdownList" class="breakdown-list"></div>
+            </div>
+            <div class="breakdown-group">
+              <span class="breakdown-title">Difficulty</span>
+              <div id="difficultyBreakdownList" class="difficulty-chips"></div>
+            </div>
+            <div class="breakdown-group">
+              <span class="breakdown-title">Languages</span>
+              <div id="languageBreakdownList" class="language-progress-list"></div>
+            </div>
+            <div id="repoBreakdownGroup" class="breakdown-group hidden">
+              <span class="breakdown-title">Repositories</span>
+              <div id="repoBreakdownList" class="breakdown-list"></div>
+            </div>
+          </div>
+
+          <!-- Automation Insights -->
+          <div class="analytics-automation-insights" id="automationInsightsBanner">
+            <span class="insight-icon">⚡</span>
+            <span id="automationInsightsText" class="insight-text">Automation: 0 filtered • 0 duplicates skipped</span>
+          </div>
+
+          <!-- Export & Deletion Actions -->
+          <div class="analytics-actions-row">
+            <div class="export-btn-group">
+              <button id="exportCsvBtn" class="secondary-btn xs" title="Export as CSV">Export CSV</button>
+              <button id="exportJsonBtn" class="secondary-btn xs" title="Export as JSON">Export JSON</button>
+            </div>
+            <button id="deleteAnalyticsBtn" class="danger-btn xs" title="Delete personal analytics data">Delete Data</button>
+          </div>
+
+          <!-- Privacy Notice -->
+          <div class="analytics-privacy-note">
+            <span>🔒 Analytics uses Fly2Git sync metadata. Solution source code is not stored for analytics.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         PANEL 3: SYNC — REPOSITORIES, PLATFORMS, AUTOMATION & LOGS
+         ==================================================================== -->
+    <div id="tabPanelSync" class="cockpit-panel hidden" role="tabpanel" aria-labelledby="navTabSync">
+
+      <!-- Active Repository Card -->
+      <div class="glass-card active-repo-card glass-02">
+        <div class="repo-card-top">
+          <div class="repo-eyebrow">
+            <svg class="gh-mini-svg" viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            <span>GITHUB REPOSITORY</span>
+          </div>
+          <button id="changeRepoBtn" class="change-repo-btn" title="Change target repository">
+            <span>Change</span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+        <div class="active-repo">
+          <span class="dot"></span>
+          <div class="repo-meta-col">
+            <strong id="activeRepoName" class="active-repo-name"></strong>
+            <div class="hint">Syncing accepted solutions</div>
+          </div>
+        </div>
+        <!-- Pro Multi-Repository Notice -->
+        <div id="repoMultiNotice" class="repo-multi-notice hidden">
+          <div class="repo-multi-badge">
+            <span class="repo-multi-icon">✦</span>
+            <span class="repo-multi-title">Multiple repositories</span>
+          </div>
+          <span class="coming-soon-pill">Coming soon</span>
+        </div>
+      </div>
+
+      <!-- Last sync status banner -->
+      <div id="lastSyncBanner" class="last-sync-banner hidden">
+        <span id="lastSyncIcon" class="last-sync-icon"></span>
+        <div class="last-sync-details">
+          <span id="lastSyncText" class="last-sync-text"></span>
+          <span id="lastSyncTime" class="last-sync-time"></span>
+        </div>
+      </div>
+
+      <!-- Platform selection & ecosystem card -->
+      <div class="glass-card plan-card glass-02">
+        <div class="plan-header">
+          <span class="plan-title">PLATFORMS</span>
+          <span id="planBadge" class="plan-badge">Basic — Free</span>
+        </div>
+
+        <!-- Pre-selection UX Disclosure (Phase 13A) -->
+        <div id="platformDisclosure" class="platform-disclosure">
+          <strong id="disclosureTitle" class="disclosure-title">Choose up to 2 platforms</strong>
+          <p id="disclosureSubtitle" class="disclosure-subtitle">
+            You can edit your selections later. Basic platform slots can be changed once every 30 days.
+          </p>
+        </div>
+
+        <!-- Downgrade Banner: Explicit selection required when Pro becomes Basic (Phase 13A) -->
+        <div id="downgradeBanner" class="downgrade-banner hidden">
+          <span class="downgrade-icon">ℹ️</span>
+          <div class="downgrade-text">
+            <strong>Choose your 2 Basic platforms.</strong>
+            <span>Your plan changed to Basic. Please select your 2 active platforms. Existing GitHub history is preserved.</span>
+          </div>
+        </div>
+
+        <!-- Visual Slot Presentation for Basic (Phase 13A) -->
+        <div id="basicSlotsContainer" class="basic-slots-container"></div>
+
+        <div class="platforms-subheading">
+          <span class="subheading-title">Active Platforms</span>
+          <span id="platformsLimitHint" class="platforms-limit-hint">(Choose any 2)</span>
+        </div>
+
+        <div id="platformsList" class="platforms-list"></div>
+        <div id="platformMessage" class="platform-message hidden"></div>
+      </div>
+
+      <!-- Advanced Automation Card (Phase 14A) -->
+      <div id="automationCard" class="glass-card automation-card glass-02">
+        <div class="card-eyebrow">
+          <span>ADVANCED AUTOMATION</span>
+          <span id="automationProBadge" class="pro-badge-mini hidden">PRO</span>
+        </div>
+
+        <!-- Basic User Teaser -->
+        <div id="automationBasicTeaser" class="automation-basic-teaser">
+          <div class="teaser-header">
+            <span class="teaser-icon">⚡</span>
+            <div class="teaser-text">
+              <strong>Workflow Automation</strong>
+              <span>Available with Pro</span>
+            </div>
+          </div>
+          <p class="teaser-desc">
+            Customize commit messages, folder organization templates, difficulty filters, and per-platform sync controls.
+          </p>
+          <div class="teaser-tags">
+            <span class="teaser-tag">Commit templates</span>
+            <span class="teaser-tag">Path rules</span>
+            <span class="teaser-tag">Filters</span>
+            <span class="teaser-tag">Per-platform</span>
+          </div>
+        </div>
+
+        <!-- Pro Controls Panel -->
+        <div id="automationProControls" class="automation-pro-controls hidden">
+          <!-- Preset Row -->
+          <div class="automation-field-group">
+            <label for="automationPresetSelect" class="automation-label">Workflow Preset</label>
+            <div class="select-wrapper">
+              <select id="automationPresetSelect">
+                <option value="balanced">Balanced (Default)</option>
+                <option value="portfolio">Clean Portfolio (Skip Easy)</option>
+                <option value="polyglot">Polyglot Archive (By Language)</option>
+                <option value="custom">Custom Configuration</option>
+              </select>
+            </div>
+            <p id="automationPresetHint" class="automation-hint"></p>
+          </div>
+
+          <!-- Commit Message Template -->
+          <div class="automation-field-group">
+            <label for="automationCommitTemplate" class="automation-label">Commit Message</label>
+            <input type="text" id="automationCommitTemplate" class="automation-input" placeholder="{action}: {problemTitle} ({difficulty})" />
+            <div class="automation-placeholder-pills">
+              <span class="pill-chip" data-target="automationCommitTemplate" data-insert="{action}">{action}</span>
+              <span class="pill-chip" data-target="automationCommitTemplate" data-insert="{problemTitle}">{problemTitle}</span>
+              <span class="pill-chip" data-target="automationCommitTemplate" data-insert="{difficulty}">{difficulty}</span>
+              <span class="pill-chip" data-target="automationCommitTemplate" data-insert="{language}">{language}</span>
+            </div>
+          </div>
+
+          <!-- Path / Organization Template -->
+          <div class="automation-field-group">
+            <label for="automationPathTemplate" class="automation-label">Directory Structure</label>
+            <input type="text" id="automationPathTemplate" class="automation-input" placeholder="{platform}/{difficulty}/{slug}" />
+            <div class="automation-placeholder-pills">
+              <span class="pill-chip" data-target="automationPathTemplate" data-insert="{platform}">{platform}</span>
+              <span class="pill-chip" data-target="automationPathTemplate" data-insert="{difficulty}">{difficulty}</span>
+              <span class="pill-chip" data-target="automationPathTemplate" data-insert="{slug}">{slug}</span>
+              <span class="pill-chip" data-target="automationPathTemplate" data-insert="{language}">{language}</span>
+            </div>
+          </div>
+
+          <!-- Difficulty Filters -->
+          <div class="automation-field-group">
+            <span class="automation-label">Filter Out Difficulties</span>
+            <div class="filter-checkbox-grid">
+              <label class="filter-check-item">
+                <input type="checkbox" id="filterExcludeEasy" />
+                <span>Skip Easy</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" id="filterExcludeMedium" />
+                <span>Skip Medium</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" id="filterExcludeHard" />
+                <span>Skip Hard</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Save Button and Feedback Notice -->
+          <div class="automation-actions-row">
+            <button id="saveAutomationBtn" class="primary-btn sm">Save Automation</button>
+            <span id="automationNotice" class="automation-notice hidden">Saved!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Sync History -->
+      <div class="glass-card sync-log-card glass-02">
+        <div class="sync-log-header">
+          <h2>RECENT SYNCS</h2>
+          <button id="clearSyncLogBtn" class="clear-btn hidden" title="Clear sync history">Clear</button>
+        </div>
+        <ul id="syncLogList" class="sync-log"></ul>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         PANEL 4: SETTINGS — ENTITLEMENTS, ACCOUNT, SECURITY & SYSTEM
+         ==================================================================== -->
+    <div id="tabPanelSettings" class="cockpit-panel hidden" role="tabpanel" aria-labelledby="navTabSettings">
+
+      <!-- Plan & Entitlement Status Card -->
+      <div id="planSummaryCard" class="glass-card plan-summary-card glass-02">
+        <div class="plan-summary-header">
+          <div class="plan-summary-meta">
+            <span class="plan-summary-eyebrow">FLY2GIT PLAN</span>
+            <div class="plan-title-row">
+              <h2 id="planSummaryTitle" class="plan-summary-title">Basic</h2>
+              <span id="planSummaryStatusBadge" class="plan-status-badge">Free</span>
+            </div>
+          </div>
+          <button id="upgradeToProBtn" class="upgrade-btn">
+            <span>Upgrade to Pro</span>
+            <span class="btn-sparkle">✦</span>
+          </button>
+        </div>
+
+        <!-- Basic Plan Details -->
+        <div id="basicPlanDetails" class="plan-details-grid">
+          <div class="plan-metric-pill">
+            <span class="metric-label">Platforms</span>
+            <strong id="basicPlatformCount" class="metric-value">2 / 2 active</strong>
+          </div>
+          <div class="plan-metric-pill">
+            <span class="metric-label">Repository</span>
+            <strong class="metric-value">1 target</strong>
+          </div>
+          <div class="plan-metric-pill full-width">
+            <span class="metric-label">Core syncing</span>
+            <strong class="metric-value sync-available">
+              <span class="sync-dot"></span> Available
+            </strong>
+          </div>
+        </div>
+
+        <!-- Pro Plan Feature Presentation -->
+        <div id="proPlanDetails" class="pro-features-grid hidden">
+          <div id="proBillingInfo" class="pro-subscription-banner">
+            <div class="pro-sub-header">
+              <span id="proSubStatus" class="pro-sub-status">Pro · Active</span>
+              <span id="proSubCycle" class="pro-sub-cycle">Monthly</span>
+            </div>
+            <div id="proSubRenewal" class="pro-sub-renewal"></div>
+          </div>
+
+          <div class="pro-feature-card active">
+            <div class="feature-card-header">
+              <div class="feature-card-title-group">
+                <span class="feature-icon">✓</span>
+                <strong class="feature-card-title">ALL PLATFORMS</strong>
+              </div>
+              <span class="feature-status-pill active">Active</span>
+            </div>
+            <p class="feature-card-desc">Sync across every supported coding platform.</p>
+          </div>
+
+          <div class="pro-feature-card upcoming">
+            <div class="feature-card-header">
+              <div class="feature-card-title-group">
+                <span class="feature-icon">✦</span>
+                <strong class="feature-card-title">MULTIPLE REPOSITORIES</strong>
+              </div>
+              <span class="coming-soon-pill">Coming soon</span>
+            </div>
+            <p class="feature-card-desc">Organize solutions across more than one GitHub repository.</p>
+          </div>
+
+          <div class="pro-feature-card upcoming">
+            <div class="feature-card-header">
+              <div class="feature-card-title-group">
+                <span class="feature-icon">⚡</span>
+                <strong class="feature-card-title">ADVANCED AUTOMATION</strong>
+              </div>
+              <span class="coming-soon-pill">Coming soon</span>
+            </div>
+            <p class="feature-card-desc">Future automation controls.</p>
+          </div>
+
+          <div class="pro-feature-card upcoming">
+            <div class="feature-card-header">
+              <div class="feature-card-title-group">
+                <span class="feature-icon">📊</span>
+                <strong class="feature-card-title">ANALYTICS</strong>
+              </div>
+              <span class="coming-soon-pill">Coming soon</span>
+            </div>
+            <p class="feature-card-desc">Future coding and sync insights.</p>
+          </div>
+
+          <div class="pro-feature-card upcoming">
+            <div class="feature-card-header">
+              <div class="feature-card-title-group">
+                <span class="feature-icon">🤖</span>
+                <strong class="feature-card-title">AI</strong>
+              </div>
+              <span class="coming-soon-pill">Coming soon</span>
+            </div>
+            <p class="feature-card-desc">Future intelligent coding insights.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informational Pro Upgrade Sheet (Zero Payment / Honest UX) -->
+      <div id="proUpgradeSheet" class="pro-upgrade-sheet glass-04 hidden">
+        <div class="pro-sheet-header">
+          <div class="pro-sheet-badge">
+            <span class="btn-sparkle">✦</span>
+            <span>Fly2Git Pro</span>
+          </div>
+          <button id="closeProSheetBtn" class="close-sheet-btn" title="Close info" aria-label="Close Pro info">✕</button>
+        </div>
+        <h3 class="pro-sheet-title">Pro is coming soon.</h3>
+        <p class="pro-sheet-lead">
+          Unlock all platforms, multiple repositories, advanced automation, analytics and future AI features.
+        </p>
+        <div class="pro-sheet-pillars">
+          <div class="pillar-item"><span class="pillar-bullet">✦</span> All platforms.</div>
+          <div class="pillar-item"><span class="pillar-bullet">✦</span> More automation.</div>
+          <div class="pillar-item"><span class="pillar-bullet">✦</span> More control.</div>
+        </div>
+        <div class="pro-sheet-footer">
+          <span class="preview-notice">Coming soon · Zero payment collection</span>
+        </div>
+      </div>
+
+      <!-- Identity Guard Alert Banner -->
+      <div id="identityGuardBanner" class="identity-guard-card glass-02 hidden">
+        <div class="identity-guard-header">
+          <span class="identity-shield-icon">🛡️</span>
+          <div class="identity-header-text">
+            <strong id="identityGuardTitle" class="identity-title">Account Verification</strong>
+            <span id="identityGuardSubtitle" class="identity-subtitle"></span>
+          </div>
+        </div>
+        <div id="identityGuardDetails" class="identity-details"></div>
+        <div class="identity-guard-actions">
+          <button id="identityUseBtn" class="primary-btn identity-action-btn">Use this account</button>
+          <button id="identityPauseBtn" class="secondary identity-action-btn">Keep paused</button>
+        </div>
+      </div>
+
+      <!-- Privacy & Telemetry Control (Phase 18 Section 3) -->
+      <div class="glass-card settings-privacy-card glass-02">
+        <div class="card-eyebrow">PRIVACY & TELEMETRY</div>
+        <div class="privacy-control-group">
+          <div class="toggle-text-group">
+            <strong class="toggle-title">Help improve Fly2Git</strong>
+            <p class="toggle-desc">Share product usage events (e.g. sync success, platform choices) to improve reliability. Never sends code, prompts, tokens, or browsing history.</p>
+          </div>
+          <div class="toggle-action">
+            <label class="switch" for="productTelemetryToggle">
+              <input type="checkbox" id="productTelemetryToggle" checked />
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support View (Phase 18 Section 16) -->
+      <div class="glass-card settings-support-card glass-02">
+        <div class="card-eyebrow">SUPPORT</div>
+        <div class="support-btn-group">
+          <button id="reportProblemBtn" class="secondary full-width" type="button">Report a Problem</button>
+          <button id="copyDiagnosticsBtn" class="secondary full-width" type="button">Copy Diagnostics</button>
+          <button id="viewPrivacyBtn" class="secondary full-width" type="button">Privacy Information</button>
+        </div>
+        <div id="supportActionFeedback" class="platform-message hidden"></div>
+      </div>
+
+      <!-- Disconnect Action Container -->
+      <div class="disconnect-section">
+        <button id="disconnectBtn" class="secondary danger full-width">Disconnect GitHub</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Auth Modal (Login / Registration) -->
+  <div id="authModal" class="auth-modal hidden" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
+    <div class="glass-card auth-modal-card glass-04">
+      <div class="auth-modal-header">
+        <h3 id="authModalTitle" class="auth-modal-title">Sign In</h3>
+        <button id="closeAuthModalBtn" class="close-sheet-btn" type="button" aria-label="Close">✕</button>
+      </div>
+      <form id="authForm" class="auth-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="authEmail" class="form-label">Email</label>
+          <input type="email" id="authEmail" class="form-input" placeholder="you@domain.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="authPassword" class="form-label">Password</label>
+          <input type="password" id="authPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <div id="authErrorMsg" class="platform-message hidden"></div>
+        <button type="submit" id="authSubmitBtn" class="primary-btn full-width">Sign In</button>
+        <div class="auth-toggle-row">
+          <span id="authTogglePrompt">Don't have an account?</span>
+          <button type="button" id="authToggleBtn" class="account-toggle-link">Create account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Platform Slot Switch Modal (Phase 13A) -->
+  <div id="slotSwitchModal" class="auth-modal hidden" role="dialog" aria-modal="true" aria-labelledby="slotSwitchTitle">
+    <div class="auth-modal-backdrop" id="slotSwitchBackdrop"></div>
+    <div class="glass-card auth-modal-card slot-switch-card glass-04">
+      <div class="auth-modal-header">
+        <h3 id="slotSwitchTitle" class="auth-modal-title">Edit Platform Slot</h3>
+        <button id="closeSlotSwitchBtn" class="close-sheet-btn" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="slot-switch-content">
+        <div class="slot-switch-current">
+          <span class="current-label">Current:</span>
+          <strong id="slotSwitchCurrentName" class="current-value">LeetCode</strong>
+        </div>
+        <div class="form-group">
+          <label for="slotSwitchSelect" class="form-label">New Platform</label>
+          <select id="slotSwitchSelect" class="form-input"></select>
+        </div>
+        <div id="slotSwitchGuidance" class="slot-switch-guidance">
+          You can change this slot now.
+        </div>
+        <div id="slotSwitchError" class="platform-message hidden"></div>
+        <div class="slot-switch-actions">
+          <button id="confirmSlotSwitchBtn" class="primary-btn full-width">Confirm Switch</button>
+          <button id="cancelSlotSwitchBtn" class="secondary full-width">Cancel</button>
+        </div>
+        <div id="slotSwitchLockedExtra" class="slot-locked-extra hidden">
+          <span>Need all platforms now? </span>
+          <a href="#" id="slotUpgradeLink" class="account-toggle-link">Upgrade to Pro</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback / Report Problem Modal (Phase 18 Section 4) -->
+  <div id="feedbackModal" class="auth-modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackModalTitle">
+    <div class="auth-modal-backdrop" id="feedbackModalBackdrop"></div>
+    <div class="glass-card auth-modal-card feedback-modal-card glass-04">
+      <div class="auth-modal-header">
+        <h3 id="feedbackModalTitle" class="auth-modal-title">Report a Problem / Feedback</h3>
+        <button id="closeFeedbackModalBtn" class="close-sheet-btn" type="button" aria-label="Close">✕</button>
+      </div>
+      <form id="feedbackForm" class="auth-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="feedbackCategory" class="form-label">Category</label>
+          <select id="feedbackCategory" class="form-input">
+            <option value="bug">Bug</option>
+            <option value="confusing">Confusing</option>
+            <option value="feature_request">Feature Request</option>
+            <option value="feedback">General Feedback</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="feedbackMessage" class="form-label">Message</label>
+          <textarea id="feedbackMessage" class="form-input" rows="4" maxlength="2000" placeholder="Describe the issue or how we can improve Fly2Git..." required></textarea>
+        </div>
+        <div id="feedbackStatusMsg" class="platform-message hidden"></div>
+        <div class="slot-switch-actions">
+          <button type="submit" id="submitFeedbackBtn" class="primary-btn full-width">Send Feedback</button>
+          <button type="button" id="cancelFeedbackBtn" class="secondary full-width">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Post-Sync Feedback Toast (Phase 18 Section 5) -->
+  <div id="postSyncFeedbackToast" class="post-sync-feedback-toast glass-04 hidden" role="status">
+    <span class="feedback-toast-text">How was that sync?</span>
+    <div class="feedback-toast-actions">
+      <button id="postSyncFeedbackGoodBtn" class="mini-feedback-btn" type="button" title="Smooth sync">👍 Good</button>
+      <button id="postSyncFeedbackIssueBtn" class="mini-feedback-btn" type="button" title="Experienced an issue">👎 Issue</button>
+      <button id="closePostSyncFeedbackBtn" class="mini-close-btn" type="button" aria-label="Dismiss">✕</button>
+    </div>
+  </div>
+
+  <!-- Global Cockpit Footer -->
+  <footer class="app-footer">
     <a href="#" id="copyDiagnosticsLink">Copy Diagnostics</a>
     <span class="footer-sep">·</span>
     <a href="#" id="reportLink">Report an issue</a>
@@ -94,7 +1184,15 @@
 
   <script src="platforms.js"></script>
   <script src="entitlements.js"></script>
+  <script src="identity.js"></script>
+  <script src="automation-rules.js"></script>
+  <script src="analytics.js"></script>
+  <script src="ai-client.js"></script>
   <script src="config.js"></script>
+  <script src="sync-notification.js"></script>
+  <script src="diagnostics.js"></script>
+  <script src="complexity-service.js"></script>
   <script src="popup.js"></script>
+  <script src="liquid-motion.js"></script>
 </body>
 </html>

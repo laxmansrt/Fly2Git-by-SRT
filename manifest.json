@@ -13,9 +13,12 @@
     "https://www.geeksforgeeks.org/*",
     "https://www.hackerrank.com/*",
     "https://www.codechef.com/*",
+    "https://atcoder.jp/*",
     "https://codeforces.com/*",
+    "https://www.spoj.com/*",
     "https://api.github.com/*",
-    "https://github.com/*"
+    "https://github.com/*",
+    "https://api.fly2git.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -36,6 +39,7 @@
         "https://leetcode.com/problems/*"
       ],
       "js": [
+        "sync-notification.js",
         "content.js"
       ],
       "run_at": "document_start"
@@ -55,6 +59,7 @@
         "https://www.geeksforgeeks.org/problems/*"
       ],
       "js": [
+        "sync-notification.js",
         "gfg-content.js"
       ],
       "run_at": "document_idle"
@@ -76,6 +81,7 @@
         "https://www.hackerrank.com/contests/*/challenges/*"
       ],
       "js": [
+        "sync-notification.js",
         "hackerrank-content.js"
       ],
       "run_at": "document_start"
@@ -95,7 +101,28 @@
         "https://www.codechef.com/*"
       ],
       "js": [
+        "sync-notification.js",
         "codechef-content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://atcoder.jp/*"
+      ],
+      "js": [
+        "atcoder-inject.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://atcoder.jp/*"
+      ],
+      "js": [
+        "sync-notification.js",
+        "atcoder-content.js"
       ],
       "run_at": "document_start"
     },
@@ -114,7 +141,28 @@
         "https://codeforces.com/*"
       ],
       "js": [
+        "sync-notification.js",
         "codeforces-content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.spoj.com/*"
+      ],
+      "js": [
+        "spoj-inject.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.spoj.com/*"
+      ],
+      "js": [
+        "sync-notification.js",
+        "spoj-content.js"
       ],
       "run_at": "document_start"
     }
@@ -123,12 +171,13 @@
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
     }
   },
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   }

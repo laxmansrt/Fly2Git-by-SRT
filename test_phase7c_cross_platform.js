@@ -294,24 +294,32 @@ async function runAllTests() {
   // ---------------------------------------------------------------------
   console.log("\n--- H. INACTIVE PLATFORM HANDLING ---");
 
-  await itAsync("H.1 Inactive platform (atcoder) is rejected even on PRO plan", async () => {
+  await itAsync("H.1 Inactive platform (usaco) is rejected even on PRO plan", async () => {
     const proEntitlement = { version: 1, plan: "pro", selectedPlatforms: [] };
 
-    const pAtCoder = {
-      platform: "AtCoder",
+    const pUsaco = {
+      platform: "USACO",
       problem: { slug: "123A", title: "Problem 123A", difficulty: "Unknown" },
       submission: { id: "123", status: "Accepted", language: "cpp", code: "int main(){}" }
     };
-    const val = platforms.validateNormalizedSubmission(pAtCoder);
+    const val = platforms.validateNormalizedSubmission(pUsaco);
     assert.strictEqual(val.ok, false);
     assert(val.error.includes("not yet active"));
 
-    const allowedAC = await entitlements.isPlatformAllowed("atcoder", proEntitlement);
-    assert.strictEqual(allowedAC, false, "Inactive platform must never be allowed while inactive");
+    const allowedUsaco = await entitlements.isPlatformAllowed("usaco", proEntitlement);
+    assert.strictEqual(allowedUsaco, false, "Inactive platform must never be allowed while inactive");
+
+    // SPOJ is active in Phase 10B and permitted on Pro
+    const allowedSpoj = await entitlements.isPlatformAllowed("spoj", proEntitlement);
+    assert.strictEqual(allowedSpoj, true, "SPOJ is active and allowed on Pro plan");
 
     // Codeforces is active in Phase 9B and permitted on Pro
     const allowedCF = await entitlements.isPlatformAllowed("codeforces", proEntitlement);
     assert.strictEqual(allowedCF, true, "Codeforces is active and allowed on Pro plan");
+
+    // AtCoder is active in Phase 8B and permitted on Pro
+    const allowedAC = await entitlements.isPlatformAllowed("atcoder", proEntitlement);
+    assert.strictEqual(allowedAC, true, "AtCoder is active and allowed on Pro plan");
   });
 
   // ---------------------------------------------------------------------

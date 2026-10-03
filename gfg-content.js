@@ -44,6 +44,34 @@
   var emittedAcceptanceKeys = new Set(); // Guard: geeksforgeeks:slug:submissionId
   var bodyObserver = null;
   var lastObservedPath = "";
+  var detectedIdentity = null;
+
+  function detectGfgIdentity() {
+    try {
+      var userEl = document.querySelector('a[href*="/user/"], .user_profile, .header-user-profile');
+      var username = null;
+      if (userEl && userEl.getAttribute("href")) {
+        var m = userEl.getAttribute("href").match(/\/user\/([^/?#]+)/);
+        if (m) username = m[1];
+      }
+      if (!username && userEl) {
+        var txt = userEl.textContent.trim();
+        if (txt && !txt.includes("Sign In") && !txt.includes("Login") && txt.length <= 50) {
+          username = txt;
+        }
+      }
+      if (username) {
+        detectedIdentity = { username: username, platformUserId: username };
+        if (isExtensionContextValid()) {
+          chrome.runtime.sendMessage({
+            type: "PLATFORM_IDENTITY_DETECTED",
+            platform: "geeksforgeeks",
+            identity: detectedIdentity,
+          }).catch(function () {});
+        }
+      }
+    } catch (_) {}
+  }
 
   function debug() {
     var args = Array.prototype.slice.call(arguments);
@@ -146,9 +174,12 @@
 
     debug("Forwarding accepted submission to background", raw.submissionId);
 
+    var userIdentity = raw.user || detectedIdentity;
+
     // Build NormalizedSubmission structure
     var normalizedPayload = {
       platform: "GeeksforGeeks",
+      user: userIdentity,
       problem: {
         slug: raw.slug,
         title: raw.title || raw.slug,
@@ -311,6 +342,7 @@
 
     bodyObserver.observe(document.body, { childList: true, subtree: true });
     lastObservedPath = window.location.pathname;
+    detectGfgIdentity();
     debug("Observer started on", lastObservedPath);
   }
 

@@ -28,6 +28,37 @@
 
   var MAX_CODE_LENGTH = 200000;
   var emittedAcceptanceKeys = new Set(); // Guard: hackerrank:slug:submissionId
+  var detectedIdentity = null;
+
+  function detectHackerRankIdentity() {
+    try {
+      var userEl = document.querySelector('a[href^="/profile/"], .profile-username, .username, [data-analytics="NavBarUserDropdown"]');
+      var username = null;
+      if (userEl && userEl.getAttribute("href")) {
+        var m = userEl.getAttribute("href").match(/\/profile\/([^/?#]+)/);
+        if (m) username = m[1];
+      }
+      if (!username && userEl) {
+        var txt = userEl.textContent.trim();
+        if (txt && !txt.includes("Log In") && !txt.includes("Sign Up") && txt.length <= 50) {
+          username = txt;
+        }
+      }
+      if (username) {
+        detectedIdentity = { username: username, platformUserId: username };
+        if (isExtensionContextValid()) {
+          chrome.runtime.sendMessage({
+            type: "PLATFORM_IDENTITY_DETECTED",
+            platform: "hackerrank",
+            identity: detectedIdentity,
+          }).catch(function () {});
+        }
+      }
+    } catch (_) {}
+  }
+
+  detectHackerRankIdentity();
+  setTimeout(detectHackerRankIdentity, 1500);
 
   function debug() {
     var args = Array.prototype.slice.call(arguments);
@@ -102,6 +133,8 @@
       console.warn("[Fly2Git][HackerRank] Payload rejected:", validationError);
       return;
     }
+
+    normalizedPayload.user = normalizedPayload.user || detectedIdentity;
 
     var slug = normalizedPayload.problem.slug;
     var submissionId = normalizedPayload.submission.id;

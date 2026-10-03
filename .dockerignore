@@ -1,0 +1,12 @@
+.git
+.github
+.gemini
+docs
+scratch
+data
+*.log
+test_*.js
+*.md
+.DS_Store
+*.png
+node_modules

@@ -27,6 +27,9 @@ const FLY2GIT_CONFIG = {
 
   BRAND_NAME: "Fly2Git by SRT",
 
-  // Development diagnostics are safe: never log GitHub tokens or secrets.
-  DEBUG: true,
+  // Production backend API URL.
+  BACKEND_API_URL: "https://api.fly2git.com",
+
+  // Development diagnostics are disabled in production release.
+  DEBUG: false,
 };

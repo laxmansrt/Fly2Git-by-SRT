@@ -28,6 +28,37 @@
 
   var MAX_CODE_LENGTH = 200000;
   var emittedAcceptanceKeys = new Set(); // Guard: codechef:contest:problem:solutionId
+  var detectedIdentity = null;
+
+  function detectCodeChefIdentity() {
+    try {
+      var userEl = document.querySelector('header a[href^="/users/"], .user-name, .m-sidebar a[href^="/users/"]');
+      var username = null;
+      if (userEl && userEl.getAttribute("href")) {
+        var m = userEl.getAttribute("href").match(/\/users\/([^/?#]+)/);
+        if (m) username = m[1];
+      }
+      if (!username && userEl) {
+        var txt = userEl.textContent.trim();
+        if (txt && !txt.includes("Login") && !txt.includes("Register") && txt.length <= 50) {
+          username = txt;
+        }
+      }
+      if (username) {
+        detectedIdentity = { username: username, platformUserId: username };
+        if (isExtensionContextValid()) {
+          chrome.runtime.sendMessage({
+            type: "PLATFORM_IDENTITY_DETECTED",
+            platform: "codechef",
+            identity: detectedIdentity,
+          }).catch(function () {});
+        }
+      }
+    } catch (_) {}
+  }
+
+  detectCodeChefIdentity();
+  setTimeout(detectCodeChefIdentity, 1500);
 
   function debug() {
     var args = Array.prototype.slice.call(arguments);
@@ -102,6 +133,8 @@
       console.warn("[Fly2Git][CodeChef] Payload rejected:", validationError);
       return;
     }
+
+    normalizedPayload.user = normalizedPayload.user || detectedIdentity;
 
     var slug = normalizedPayload.problem.slug;
     var solutionId = normalizedPayload.submission.id;

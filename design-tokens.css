@@ -1,0 +1,295 @@
+/**
+ * Fly2Git by SRT — Design System Tokens
+ * "Developer Intelligence Cockpit" — Your Coding Practice OS
+ * Phase 16.1: Obsidian × Sand × Deep Blue Visual Theme
+ *
+ * Centralized design tokens establishing color hierarchy, 4-tier glass surfaces,
+ * technical typography, 8-point spacing, micro-interactions, and accessibility.
+ */
+
+:root {
+  /* ==========================================================================
+     1. COLOR SYSTEM — OBSIDIAN × SAND × DEEP BLUE
+     Calm, mature, cinematic, technical palette.
+     Dominant: Deep Charcoal / Obsidian (#171719, deep #101113).
+     Primary Accent: Warm Sand / Champagne (#D8B98A, light #E8CFA8, muted #BFA77D).
+     Secondary Accent: Muted Slate / Deep Blue (#40566B, light #61778B).
+     Restrained semantics: Natural Green, Muted Amber, Restrained Red.
+     ========================================================================== */
+
+  /* Base Obsidian Environment */
+  --color-bg: #171719;
+  --color-bg-deep: #101113;
+  --color-surface: #222325;
+  --color-surface-elevated: #2A2B2E;
+
+  /* Aliases for backwards compatibility */
+  --color-background: var(--color-bg);
+
+  /* Sand / Champagne Metallic Warmth */
+  --color-sand: #D8B98A;
+  --color-sand-light: #E8CFA8;
+  --color-sand-muted: #BFA77D;
+
+  /* Deep Blue Technical Context */
+  --color-deep-blue: #40566B;
+  --color-blue-light: #61778B;
+
+  /* High Legibility Warm & Muted Typography */
+  --color-text-primary: #F3F0EA;
+  --color-text-secondary: #AAA49A;
+  --color-text-muted: #77736C;
+
+  /* Borders & Dividers */
+  --color-border: rgba(232, 207, 168, 0.14);
+  --color-border-subtle: rgba(232, 207, 168, 0.08);
+  --color-border-strong: rgba(232, 207, 168, 0.28);
+  --color-border-focus: var(--color-sand);
+
+  /* Glass Base Tiers */
+  --color-glass: rgba(255, 255, 255, 0.055);
+  --color-glass-strong: rgba(255, 255, 255, 0.085);
+
+  /* Primary Accent Mapping (Sand) */
+  --color-accent: var(--color-sand);
+  --color-accent-hover: var(--color-sand-light);
+  --color-accent-subtle: rgba(216, 185, 138, 0.14);
+  --color-accent-glow: rgba(216, 185, 138, 0.24);
+
+  /* Restrained Semantic Accents */
+  --color-success: #34d399;           /* Restrained natural green */
+  --color-success-subtle: rgba(52, 211, 153, 0.12);
+  --color-warning: #e0a352;           /* Muted amber */
+  --color-warning-subtle: rgba(224, 163, 82, 0.12);
+  --color-danger: #e57373;            /* Restrained red */
+  --color-danger-subtle: rgba(229, 115, 115, 0.12);
+
+  /* Platform Brand Accents (Preserved genuine platform identities) */
+  --color-leetcode: #ffa116;
+  --color-geeksforgeeks: #2f8d46;
+  --color-hackerrank: #2ec866;
+  --color-codechef: #9b6b43;
+  --color-codeforces: #318ce7;
+  --color-atcoder: #404040;
+  --color-spoj: #004b7c;
+
+  /* ==========================================================================
+     2. GLASS SYSTEM
+     4 intentional, bounded surface tiers for distinct spatial depth.
+     Translucent charcoal surfaces, sand-tinted borders, controlled blur.
+     ========================================================================== */
+
+  /* Glass 01: Very subtle transparent surface (chips, passive containers, sub-bars) */
+  --glass-01-bg: rgba(255, 255, 255, 0.03);
+  --glass-01-border: 1px solid rgba(232, 207, 168, 0.08);
+  --glass-01-shadow: none;
+  --glass-01-backdrop: blur(6px);
+
+  /* Glass 02: Standard content surface (cards, tabs, bento items) */
+  --glass-02-bg: rgba(34, 35, 37, 0.76);
+  --glass-02-border: 1px solid rgba(232, 207, 168, 0.12);
+  --glass-02-shadow: inset 0 1px 0 0 rgba(232, 207, 168, 0.05), 0 8px 24px -6px rgba(0, 0, 0, 0.55);
+  --glass-02-backdrop: blur(14px);
+
+  /* Glass 03: Active / elevated surface (current problem hero card, active tab, highlight) */
+  --glass-03-bg: rgba(42, 43, 46, 0.88);
+  --glass-03-border: 1px solid rgba(216, 185, 138, 0.30);
+  --glass-03-shadow: inset 0 1px 0 0 rgba(232, 207, 168, 0.14), 0 12px 32px -8px rgba(0, 0, 0, 0.70);
+  --glass-03-backdrop: blur(18px);
+
+  /* Glass 04: Modal / focused overlay (dialogs, slot modal, Pro sheet) */
+  --glass-04-bg: rgba(23, 23, 25, 0.96);
+  --glass-04-border: 1px solid rgba(232, 207, 168, 0.22);
+  --glass-04-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.88), inset 0 1px 0 0 rgba(232, 207, 168, 0.12);
+  --glass-04-backdrop: blur(24px);
+
+  /* ==========================================================================
+     3. TYPOGRAPHY SCALE
+     Clean, modern sans-serif with high legibility.
+     ========================================================================== */
+  --font-family-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Font Sizes & Line Heights */
+  --type-display-size: 15px;
+  --type-display-weight: 600;
+  --type-display-line: 1.25;
+  --type-display-letter: -0.015em;
+
+  --type-headline-size: 13.5px;
+  --type-headline-weight: 600;
+  --type-headline-line: 1.3;
+  --type-headline-letter: -0.01em;
+
+  --type-section-size: 10.5px;
+  --type-section-weight: 600;
+  --type-section-line: 1.35;
+  --type-section-letter: 0.06em;
+
+  --type-body-size: 12.5px;
+  --type-body-weight: 400;
+  --type-body-line: 1.45;
+  --type-body-letter: 0;
+
+  --type-caption-size: 11px;
+  --type-caption-weight: 400;
+  --type-caption-line: 1.4;
+  --type-caption-letter: 0.01em;
+
+  --type-metadata-size: 10px;
+  --type-metadata-weight: 500;
+  --type-metadata-line: 1.3;
+  --type-metadata-letter: 0.03em;
+
+  --type-numeric-size: 16px;
+  --type-numeric-weight: 600;
+  --type-numeric-line: 1.15;
+  --type-numeric-font: var(--font-family-mono);
+
+  /* ==========================================================================
+     4. SPACING SCALE & BORDER RADII
+     Restrained hierarchy: small (8px), medium (12px), large (16px), hero (20px).
+     ========================================================================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* Border Radii — restrained, no oversized rounding */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* ==========================================================================
+     5. MOTION & MICRO-INTERACTIONS
+     Fast, tactile, calm (120–220ms transitions).
+     ========================================================================== */
+  --motion-fast: 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-smooth: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-deliberate: 280ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Ambient Canvas Background — Soft warm sand highlight & deep blue secondary */
+  --canvas-ambient: radial-gradient(circle at 18% -8%, rgba(216, 185, 138, 0.09) 0%, rgba(23, 23, 25, 0) 55%),
+    radial-gradient(circle at 88% 95%, rgba(64, 86, 107, 0.12) 0%, rgba(23, 23, 25, 0) 50%),
+    #171719;
+}
+
+/* ==========================================================================
+   GLASS UTILITY CLASSES
+   ========================================================================== */
+.glass-01 {
+  background: var(--glass-01-bg);
+  border: var(--glass-01-border);
+  box-shadow: var(--glass-01-shadow);
+  backdrop-filter: var(--glass-01-backdrop);
+  -webkit-backdrop-filter: var(--glass-01-backdrop);
+}
+
+.glass-02 {
+  background: var(--glass-02-bg);
+  border: var(--glass-02-border);
+  box-shadow: var(--glass-02-shadow);
+  backdrop-filter: var(--glass-02-backdrop);
+  -webkit-backdrop-filter: var(--glass-02-backdrop);
+}
+
+.glass-03 {
+  background: var(--glass-03-bg);
+  border: var(--glass-03-border);
+  box-shadow: var(--glass-03-shadow);
+  backdrop-filter: var(--glass-03-backdrop);
+  -webkit-backdrop-filter: var(--glass-03-backdrop);
+}
+
+.glass-04 {
+  background: var(--glass-04-bg);
+  border: var(--glass-04-border);
+  box-shadow: var(--glass-04-shadow);
+  backdrop-filter: var(--glass-04-backdrop);
+  -webkit-backdrop-filter: var(--glass-04-backdrop);
+}
+
+/* ==========================================================================
+   TYPOGRAPHY UTILITY CLASSES
+   ========================================================================== */
+.type-display {
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-line);
+  letter-spacing: var(--type-display-letter);
+  color: var(--color-text-primary);
+}
+
+.type-headline {
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  line-height: var(--type-headline-line);
+  letter-spacing: var(--type-headline-letter);
+  color: var(--color-text-primary);
+}
+
+.type-section {
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  line-height: var(--type-section-line);
+  letter-spacing: var(--type-section-letter);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.type-body {
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-line);
+  letter-spacing: var(--type-body-letter);
+  color: var(--color-text-secondary);
+}
+
+.type-caption {
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-line);
+  letter-spacing: var(--type-caption-letter);
+  color: var(--color-text-muted);
+}
+
+.type-metadata {
+  font-size: var(--type-metadata-size);
+  font-weight: var(--type-metadata-weight);
+  line-height: var(--type-metadata-line);
+  letter-spacing: var(--type-metadata-letter);
+  color: var(--color-text-muted);
+}
+
+.type-numeric {
+  font-family: var(--type-numeric-font);
+  font-size: var(--type-numeric-size);
+  font-weight: var(--type-numeric-weight);
+  line-height: var(--type-numeric-line);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+/* ==========================================================================
+   REDUCED MOTION SUPPORT
+   Strict adherence to user accessibility settings.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,503 @@
+/* ==========================================================================
+   Fly2Git by SRT — Liquid Glass layer
+   Load AFTER popup.css:  <link rel="stylesheet" href="liquid-glass.css" />
+   No JS or id/class changes needed. Delete this file to roll back.
+   ========================================================================== */
+
+:root {
+  --lg-bg: #0b0c0e;
+  --lg-fill: linear-gradient(145deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,.04) 55%, rgba(255,255,255,.07) 100%);
+  --lg-fill-hi: linear-gradient(145deg, rgba(255,255,255,.19) 0%, rgba(255,255,255,.07) 55%, rgba(216,185,138,.12) 100%);
+  --lg-flat: rgba(255,255,255,.055);
+  --lg-blur: blur(26px) saturate(185%);
+  --lg-rim: inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.07);
+  --lg-drop: 0 16px 36px -16px rgba(0,0,0,.7);
+  --lg-lens: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.09));
+  --lg-sand-solid: linear-gradient(180deg, #F0DBB7 0%, #D6B481 100%);
+  --lg-spring: cubic-bezier(.34, 1.56, .64, 1);
+
+  /* concentric radii: container > tile > control */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+}
+
+/* --------------------------------------------------------------------------
+   1. BACKDROP — the glass needs something to refract.
+   The orbs are fixed, so content scrolls over them and the blur has colour.
+   -------------------------------------------------------------------------- */
+html { background: var(--lg-bg); }
+body { background: transparent; }
+
+.ambient-layer {
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(260px 260px at 88% 34%, rgba(97,119,139,.26), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+}
+.ambient-layer::before,
+.ambient-layer::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+.ambient-layer::before {
+  width: 360px; height: 360px; left: -140px; top: -120px;
+  background: radial-gradient(circle, rgba(216,185,138,.55) 0%, rgba(216,185,138,0) 68%);
+  animation: lgDriftA 16s ease-in-out infinite alternate;
+}
+.ambient-layer::after {
+  width: 430px; height: 430px; right: -170px; bottom: -150px;
+  background: radial-gradient(circle, rgba(64,110,150,.65) 0%, rgba(64,86,107,0) 68%);
+  animation: lgDriftB 20s ease-in-out infinite alternate;
+}
+@keyframes lgDriftA { to { transform: translate3d(70px, 60px, 0) scale(1.15); } }
+@keyframes lgDriftB { to { transform: translate3d(-60px, -70px, 0) scale(1.1); } }
+
+/* --------------------------------------------------------------------------
+   2. SURFACES — one recipe: translucent fill, heavy blur, specular rim
+   -------------------------------------------------------------------------- */
+.glass-card, .glass-02, .glass-03, .bento-tile,
+.ai-intelligence-card, .ai-coach-card {
+  background: var(--lg-fill);
+  -webkit-backdrop-filter: var(--lg-blur);
+  backdrop-filter: var(--lg-blur);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--lg-rim), var(--lg-drop);
+}
+.glass-card:hover, .current-problem-card:hover {
+  border-color: transparent;
+  box-shadow: var(--lg-rim), var(--lg-drop);
+}
+.glass-card { padding: 16px; }
+.active-repo-card, .plan-card, .sync-log-card,
+.home-sync-banner, .home-journey-preview { padding: 14px 16px; }
+
+/* Hero: the one place that gets a sand light source */
+.current-problem-card {
+  border-radius: var(--radius-xl);
+  padding: 18px;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(216,185,138,.24), transparent 60%),
+    var(--lg-fill-hi);
+  -webkit-backdrop-filter: var(--lg-blur);
+  backdrop-filter: var(--lg-blur);
+  box-shadow: var(--lg-rim), inset 0 0 44px rgba(216,185,138,.06), var(--lg-drop);
+}
+.no-session-icon-wrap {
+  width: 46px; height: 46px;
+  background: var(--lg-fill-hi);
+  border: 0;
+  box-shadow: var(--lg-rim);
+}
+
+/* Overlays: darker, more opaque so text stays readable */
+.glass-04, .auth-modal-card, .pro-upgrade-sheet, .post-sync-feedback-toast {
+  background: linear-gradient(145deg, rgba(44,45,50,.80), rgba(20,21,24,.74));
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+  backdrop-filter: blur(34px) saturate(190%);
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--lg-rim), 0 28px 60px -16px rgba(0,0,0,.85);
+}
+.post-sync-feedback-toast { border-radius: 20px; }
+.auth-modal-backdrop {
+  background: rgba(8,9,11,.35);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* Nested boxes go flat: no blur, no border. Fewer outlines = calmer UI */
+.slot-card, .coach-section-box, .breakdown-group, .stat-card,
+.plan-metric-pill, .pro-feature-card, .balance-card, .ai-context-bar,
+.ai-hint-selector-row, .platform-row, .analytics-chart-section,
+.intel-item-row, .context-relation-row, .pro-subscription-banner {
+  background: var(--lg-flat);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.coach-section-box.highlight { background: rgba(64,110,150,.20); }
+.platform-row.selected { background: rgba(216,185,138,.14); }
+
+/* The "Choose up to 2 platforms" box becomes a plain caption */
+.platform-disclosure {
+  background: none; border: 0; box-shadow: none;
+  padding: 0 2px; margin-bottom: 14px;
+}
+.platform-disclosure .disclosure-title { font-size: 13px; }
+
+/* --------------------------------------------------------------------------
+   3. HEADER + ACCOUNT
+   -------------------------------------------------------------------------- */
+.app-header {
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(12,13,15,.62), rgba(12,13,15,.28));
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.brand-logo { width: 30px; height: 30px; border-radius: 9px; }
+.header-status-badge { padding: 4px 11px; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+
+/* Account bar becomes a slim capsule; also fixes "Create account" wrapping */
+.account-bar {
+  margin: 12px 16px 0;
+  padding: 7px 14px;
+  background: var(--lg-flat);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.account-link-btn { width: auto; white-space: nowrap; }
+
+.view-panel { padding: 14px 16px 20px; gap: 12px; }
+
+/* --------------------------------------------------------------------------
+   4. FLOATING TAB BAR — iOS-style pill pinned to the bottom, glass "lens"
+   -------------------------------------------------------------------------- */
+.cockpit-nav {
+  order: 99;
+  position: sticky;
+  bottom: 12px;
+  z-index: 60;
+  margin: 6px 0 0;
+  padding: 5px;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(255,255,255,.17), rgba(255,255,255,.06));
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  backdrop-filter: blur(30px) saturate(190%);
+  box-shadow: var(--lg-rim), 0 18px 40px -10px rgba(0,0,0,.8);
+}
+.cockpit-nav-btn {
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 4px 7px;
+  font-size: 10px;
+  border-radius: 999px;
+  color: rgba(243,240,234,.55);
+  border: 1px solid transparent;
+}
+.cockpit-nav-icon { width: 18px; height: 18px; }
+.cockpit-nav-btn:hover { background: rgba(255,255,255,.06); color: var(--color-text-primary); }
+.cockpit-nav-btn.active,
+.cockpit-nav-btn[aria-selected="true"] {
+  color: var(--color-sand-light);
+  background: var(--lg-lens);
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(0,0,0,.2), 0 4px 14px -2px rgba(0,0,0,.45);
+}
+.nav-active-pip { display: none !important; }
+
+/* --------------------------------------------------------------------------
+   5. BUTTONS — spring press, pill shapes, one solid sand primary
+   -------------------------------------------------------------------------- */
+button {
+  transition: transform .24s var(--lg-spring), background .2s ease, box-shadow .2s ease,
+              border-color .2s ease, color .2s ease, opacity .2s ease;
+}
+button:active { transform: scale(.96); }
+
+:is(.primary-btn, button#connectBtn, button#openGithubBtn, button#saveRepoBtn, .upgrade-btn) {
+  border-radius: 999px;
+  padding: 10px 18px;
+  color: #1c160b;
+  font-weight: 600;
+  background: var(--lg-sand-solid);
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65), inset 0 -1px 0 rgba(120,90,40,.35), 0 8px 20px -8px rgba(216,185,138,.55);
+}
+:is(.primary-btn, button#connectBtn, button#openGithubBtn, button#saveRepoBtn, .upgrade-btn):hover {
+  color: #1c160b;
+  background: linear-gradient(180deg, #F6E6C6 0%, #DDBB8A 100%);
+  border-color: rgba(255,255,255,.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75), inset 0 -1px 0 rgba(120,90,40,.35), 0 10px 24px -8px rgba(216,185,138,.7);
+}
+.upgrade-btn { width: auto; padding: 6px 13px; transform: none; }
+.upgrade-btn:hover { transform: none; }
+.btn-sparkle { color: rgba(28,22,11,.65); }
+.primary-btn.coach-action-btn {
+  background: var(--lg-sand-solid) !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  color: #1c160b !important;
+}
+
+button.secondary, .secondary-btn.xs, .slot-edit-btn, .change-repo-btn {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), inset 0 0 0 1px rgba(255,255,255,.06);
+  color: var(--color-text-primary);
+}
+button.secondary:hover, .secondary-btn.xs:hover, .slot-edit-btn:hover, .change-repo-btn:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.09));
+  border-color: transparent;
+  color: #fff;
+}
+button.danger, .danger-btn.xs { border-radius: 999px; }
+
+.cockpit-action-btn {
+  border-radius: var(--radius-md);
+  padding: 10px 6px;
+  border-color: transparent;
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26);
+}
+.cockpit-action-btn.primary,
+.cockpit-action-btn.primary:hover {
+  background: linear-gradient(180deg, rgba(240,219,183,.45), rgba(216,185,138,.18));
+  border-color: transparent;
+  color: #F6E7C9;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 6px 16px -8px rgba(216,185,138,.6);
+}
+
+/* Slots: quieter. "Can change now" is the default state, so it needn't shout */
+.slot-status-badge.can-change { display: none; }
+.slot-edit-btn { width: auto; padding: 5px 16px; }
+.slot-platform-logo { width: 28px; height: 28px; border-radius: 7px; }
+.slot-card { border-radius: 20px; padding: 14px; }
+
+/* --------------------------------------------------------------------------
+   6. SEGMENTED CONTROLS — same lens as the tab bar
+   -------------------------------------------------------------------------- */
+.coach-modes-row, .analytics-range-pills {
+  border-radius: 999px;
+  padding: 3px;
+  background: rgba(0,0,0,.28);
+  border: 0;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.coach-mode-pill, .range-pill, .hint-depth-pill { border-radius: 999px; }
+.coach-mode-pill.active, .range-pill.active, .hint-depth-pill.active {
+  background: var(--lg-lens);
+  border-color: transparent;
+  color: var(--color-text-primary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 3px 10px -2px rgba(0,0,0,.4);
+}
+.ai-action-btn { border-radius: var(--radius-md); border-color: transparent; background: var(--lg-flat); }
+.ai-action-btn.active {
+  background: linear-gradient(180deg, rgba(240,219,183,.26), rgba(216,185,138,.10));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+/* --------------------------------------------------------------------------
+   7. FORM CONTROLS + iOS SWITCH
+   (also fixes the select chevron: the original data URI had "svg2+xml")
+   -------------------------------------------------------------------------- */
+select, .form-input, .automation-input, .ai-error-textarea {
+  background-color: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.25);
+}
+select {
+  padding: 10px 32px 10px 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23AAA49A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+}
+select option { background: #1b1c1f; color: #F3F0EA; }
+select:focus, .form-input:focus, .automation-input:focus, .ai-error-textarea:focus {
+  outline: none;
+  border-color: rgba(216,185,138,.7);
+  box-shadow: 0 0 0 3px rgba(216,185,138,.18);
+}
+
+.switch { width: 44px; height: 26px; }
+.slider { background-color: rgba(255,255,255,.18); box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
+.slider:before {
+  width: 22px; height: 22px; left: 2px; bottom: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  transition: transform .28s var(--lg-spring);
+}
+input:checked + .slider:before { transform: translateX(18px); }
+
+/* --------------------------------------------------------------------------
+   8. PALETTE CLEAN-UP — stray Tailwind blues/yellows pulled into Sand × Slate
+   -------------------------------------------------------------------------- */
+.user-code {
+  color: var(--color-sand-light);
+  background: rgba(216,185,138,.10);
+  border-color: rgba(216,185,138,.28);
+  text-shadow: 0 0 14px rgba(216,185,138,.4);
+}
+.coming-soon-pill {
+  color: var(--color-sand-light);
+  background: rgba(216,185,138,.12);
+  border-color: rgba(216,185,138,.30);
+}
+.multi-repo-icon, .repo-multi-icon, .pillar-bullet { color: var(--color-sand); }
+.pro-sheet-badge {
+  color: var(--color-sand-light);
+  background: rgba(216,185,138,.12);
+  border-color: rgba(216,185,138,.30);
+}
+
+/* Last-sync banner: glass capsule; if you move it inside .active-repo-card
+   (see notes) it becomes a footer row automatically */
+.last-sync-banner {
+  border-radius: 18px;
+  padding: 10px 14px;
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+}
+.last-sync-banner.success { background: linear-gradient(145deg, rgba(52,211,153,.18), rgba(52,211,153,.06)); }
+.active-repo-card .last-sync-banner {
+  margin-top: 12px;
+  padding: 10px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Bento metrics: bigger numerals, roomier tiles */
+.bento-tile { padding: 14px 16px; border-radius: 20px; }
+.bento-value { font-size: 22px; letter-spacing: -.02em; }
+
+.app-footer { border-top: 0; padding-bottom: 18px; }
+
+/* --------------------------------------------------------------------------
+   9. ENTRANCE — a quick spring when a tab opens (restarts on tab switch)
+   -------------------------------------------------------------------------- */
+@keyframes lgRise {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+.cockpit-panel > * { animation: lgRise .5s var(--lg-spring) backwards; }
+.cockpit-panel > :nth-child(2) { animation-delay: .04s; }
+.cockpit-panel > :nth-child(3) { animation-delay: .08s; }
+.cockpit-panel > :nth-child(4) { animation-delay: .12s; }
+.cockpit-panel > :nth-child(5) { animation-delay: .16s; }
+.cockpit-panel > :nth-child(n+6) { animation-delay: .2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-layer::before, .ambient-layer::after { animation: none; }
+  .cockpit-panel > * { animation: none; }
+}
+
+/* Legibility: small muted labels need more contrast on glass */
+.account-status-text,
+.card-eyebrow, .plan-title, .repo-eyebrow, .slot-label,
+.no-session-eyebrow, .bento-unit, .hint { color: rgba(243,240,234,.62); }
+.slot-platform-logo { object-fit: contain; }
+
+/* ==========================================================================
+   10. LIQUID MOTION (pairs with liquid-motion.js)
+   ========================================================================== */
+
+/* --- Tab-bar droplet --- */
+.cockpit-nav-btn { z-index: 1; overflow: hidden; }
+.cockpit-nav-icon { transition: transform .35s var(--lg-spring); }
+.cockpit-nav-btn:hover .cockpit-nav-icon,
+.cockpit-nav-btn.lg-under .cockpit-nav-icon { transform: translateY(-1px) scale(1.14); }
+
+/* once the droplet exists it IS the lens, so tabs drop their own backgrounds */
+.cockpit-nav.lg-ready .cockpit-nav-btn,
+.cockpit-nav.lg-ready .cockpit-nav-btn:hover,
+.cockpit-nav.lg-ready .cockpit-nav-btn.active,
+.cockpit-nav.lg-ready .cockpit-nav-btn[aria-selected="true"] {
+  background: none; box-shadow: none; border-color: transparent;
+}
+.cockpit-nav.lg-ready .cockpit-nav-btn.lg-under { color: var(--color-sand-light); }
+
+.lg-drop {
+  position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(120% 150% at 28% 0%, rgba(255,255,255,.46), rgba(255,255,255,.12) 55%, rgba(216,185,138,.18));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.60),
+    inset 0 -3px 8px rgba(0,0,0,.22),
+    inset 0 0 16px rgba(255,255,255,.10),
+    0 8px 20px -6px rgba(0,0,0,.55),
+    0 0 24px rgba(216,185,138,.20);
+  transform: translateX(var(--mag, 0px)) scale(var(--ps, 1));
+  transition: left .55s var(--lg-spring), width .55s var(--lg-spring),
+              top .3s ease, height .3s ease, transform .3s var(--lg-spring);
+  will-change: left, width, transform;
+}
+/* the glint on a water drop */
+.lg-drop::after {
+  content: ""; position: absolute; left: 12%; top: 9%; width: 36%; height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,.75), rgba(255,255,255,0) 70%);
+  filter: blur(1px);
+}
+.lg-drop.press { --ps: .93; }
+.lg-drop.settle { animation: lgJelly .6s ease-out; }
+@keyframes lgJelly {
+  0%   { transform: translateX(var(--mag, 0px)) scale(1.10, .88); }
+  35%  { transform: translateX(var(--mag, 0px)) scale(.96, 1.07); }
+  65%  { transform: translateX(var(--mag, 0px)) scale(1.02, .98); }
+  100% { transform: translateX(var(--mag, 0px)) scale(1, 1); }
+}
+
+/* --- Cursor light + swell on every button --- */
+:is(.primary-btn, .upgrade-btn, button.secondary, button.danger, .secondary-btn, .danger-btn,
+    .slot-edit-btn, .change-repo-btn, .cockpit-action-btn, .ai-action-btn, .coach-mode-pill,
+    .range-pill, .hint-depth-pill, .cockpit-link-btn, .mini-feedback-btn,
+    button#connectBtn, button#openGithubBtn, button#saveRepoBtn) {
+  position: relative; overflow: hidden; isolation: isolate;
+}
+:is(.primary-btn, .upgrade-btn, button.secondary, button.danger, .secondary-btn, .danger-btn,
+    .slot-edit-btn, .change-repo-btn, .cockpit-action-btn, .ai-action-btn, .coach-mode-pill,
+    .range-pill, .hint-depth-pill, .cockpit-link-btn, .mini-feedback-btn,
+    button#connectBtn, button#openGithubBtn, button#saveRepoBtn)::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; opacity: 0; transition: opacity .3s ease;
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255,255,255,.36), rgba(255,255,255,.08) 45%, transparent 70%);
+}
+:is(.primary-btn, .upgrade-btn, button.secondary, button.danger, .secondary-btn, .danger-btn,
+    .slot-edit-btn, .change-repo-btn, .cockpit-action-btn, .ai-action-btn, .coach-mode-pill,
+    .range-pill, .hint-depth-pill, .cockpit-link-btn, .mini-feedback-btn,
+    button#connectBtn, button#openGithubBtn, button#saveRepoBtn):hover::after { opacity: 1; }
+:is(.primary-btn, .upgrade-btn, button.secondary, .slot-edit-btn, .change-repo-btn,
+    .cockpit-action-btn, .ai-action-btn):hover { transform: scale(1.03); }
+:is(.primary-btn, .upgrade-btn, button.secondary, .slot-edit-btn, .change-repo-btn,
+    .cockpit-action-btn, .ai-action-btn):active { transform: scale(.96); }
+
+/* --- Soft light that follows the cursor across cards --- */
+.glass-card, .bento-tile { position: relative; }
+.glass-card::before, .bento-tile::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; opacity: 0; transition: opacity .35s ease;
+  background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(255,255,255,.10), transparent 70%);
+}
+.glass-card:hover::before, .bento-tile:hover::before { opacity: 1; }
+
+/* --- Click ripple: two expanding water rings --- */
+.lg-ripple {
+  position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 62%);
+  border: 1.5px solid rgba(255,255,255,.5);
+  transform: scale(0); opacity: .9;
+  animation: lgRing .75s cubic-bezier(.2,.7,.3,1) forwards;
+}
+.lg-ripple::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.4);
+  animation: lgRing .9s .1s cubic-bezier(.2,.7,.3,1) backwards;
+}
+@keyframes lgRing { to { transform: scale(1); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-drop { transition: none; animation: none !important; }
+  .lg-ripple { display: none; }
+  :is(.primary-btn, button.secondary, .cockpit-action-btn):hover { transform: none; }
+}
